@@ -1,4 +1,4 @@
-package com.dabwish.dabwish.data.user
+package com.dabwish.dabwish.model.user
 
 import jakarta.persistence.Entity
 import jakarta.persistence.GeneratedValue

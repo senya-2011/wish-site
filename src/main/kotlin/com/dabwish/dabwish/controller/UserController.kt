@@ -1,10 +1,8 @@
 package com.dabwish.dabwish.controller
 
-import com.dabwish.dabwish.data.user.User
+import com.dabwish.dabwish.model.user.User
 import com.dabwish.dabwish.repository.UserRepository
 import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 

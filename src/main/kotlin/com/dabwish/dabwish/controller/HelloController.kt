@@ -1,6 +1,6 @@
 package com.dabwish.dabwish.controller
 
-import com.dabwish.dabwish.data.Message
+import com.dabwish.dabwish.model.Message
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.web.bind.annotation.GetMapping

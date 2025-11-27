@@ -1,4 +1,4 @@
-package com.dabwish.dabwish.data
+package com.dabwish.dabwish.model
 
 data class Message(
     val message: String,
