@@ -1,0 +1,42 @@
+package com.dabwish.dabwish.service
+
+import com.dabwish.dabwish.exception.UserNotFoundException
+import com.dabwish.dabwish.generated.dto.UserRequest
+import com.dabwish.dabwish.generated.dto.UserUpdateRequest
+import com.dabwish.dabwish.mapper.UserMapper
+import com.dabwish.dabwish.model.user.User
+import com.dabwish.dabwish.repository.UserRepository
+import jakarta.transaction.Transactional
+import org.springframework.stereotype.Service
+
+@Service
+class UserService(
+    private val userRepository: UserRepository,
+    private val userMapper: UserMapper
+) {
+    fun findAll(): List<User> = userRepository.findAll()
+
+    fun findById(id: Long): User {
+        return userRepository.findById(id).
+                orElseThrow{ UserNotFoundException(id) }
+    }
+
+    @Transactional
+    fun create(userRequest: UserRequest): User {
+        val user = userMapper.userRequestToUser(userRequest)
+        return userRepository.save(user)
+    }
+
+    @Transactional
+    fun delete(id: Long){
+        if (!userRepository.existsById(id)) throw UserNotFoundException(id)
+        userRepository.deleteById(id)
+    }
+
+    @Transactional
+    fun update(id: Long, userUpdateRequest: UserUpdateRequest): User {
+        val user = findById(id)
+        userMapper.updateUserFromRequest(userUpdateRequest, user)
+        return userRepository.save(user)
+    }
+}
