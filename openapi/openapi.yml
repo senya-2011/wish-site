@@ -1,0 +1,232 @@
+openapi: 3.0.4
+info:
+  title: Wish site OpenAPI spec
+  version: 0.0.1
+servers: 
+  - url: http://localhost:8080/api/
+    description: Dev Server
+paths:
+  /users:
+    get:
+      summary: Метод получения всех юзеров
+      tags:
+        - Users
+      operationId: getAllUsers
+      responses:
+        '200': 
+          description: Успешный ответ со списком всех юзеров
+          content: 
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserResponse"
+        '400':
+          description: Нестандартные ответы
+          content: 
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+                
+    post:
+      summary: Метод создания юзера
+      tags:
+        - Users
+      operationId: createUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserRequest"
+      responses:
+        '200': 
+          description: Успешный ответ с конкретным юзером
+          content: 
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+        '400':
+          description: Нестандартные ответы
+          content: 
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    
+  /users/{user_id}:
+    get:
+      summary: Метод получения конкретного user по id
+      tags:
+        - Users
+      operationId: getUserById
+      parameters: 
+        - name: user_id
+          in: path
+          required: true
+          description: Индификатор юзера
+          example: 1337
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200': 
+          description: Успешный ответ с конкретным юзером
+          content: 
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+        '400':
+          description: Нестандартные ответы
+          content: 
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    
+    delete:
+      summary: Метод удаления юзера по id
+      tags:
+        - Users
+      operationId: deleteUserById
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: Индификатор юзера
+          example: 1337
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200': 
+          description: "Успешный ответ: юзер с user_id удален"
+          content: 
+            application/json: {}
+        'default':
+          description: Нестандартные ответы
+          content: 
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    patch:
+      summary: Обновление данных юзера по id
+      description: Частичное обновление. Можно передать только те поля, которые нужно изменить.
+      tags:
+        - Users
+      operationId: updateUserById
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: Идентификатор юзера
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserUpdateRequest"
+      responses:
+        '200': 
+          description: Успешный ответ с обновленным юзером
+          content: 
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+        '400':
+          description: Ошибка валидации
+          content: 
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        
+components:
+  schemas:
+    UserResponse:
+      type: object
+      required:
+        - user_id
+        - name
+        - role
+        - created_at
+      properties:
+        user_id:
+          type: integer
+          format: int64
+          example: 1337
+        name:
+          type: string
+          example: Artem Dabstep
+        role:
+          type: string
+          description: "Роль юзера: Админ или обычный"
+          enum:
+            - admin
+            - member
+          
+        created_at:
+          type: string
+          format: date-time  
+          example: "2025-11-27T16:44:00+03:00"
+        
+    UserRequest:
+      type: object
+      required:
+        - name
+        - password
+      properties:
+        name:
+          type: string
+          example: Artem Dabstep
+        password:           
+          type: string
+          format: password
+          example: "SuperSecret"
+          
+    UserUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          example: New Name 123
+          description: Новое имя (опционально)
+        role:
+          type: string
+          enum:
+            - admin
+            - member
+          description: Новая роль (опционально)
+        password:
+          type: string
+          format: password
+          description: Новый пароль (опционально)
+          example: "New SuperSecret"
+
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          example: 404
+        message:
+          type: string
+          example: Page not found
+          
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+        
