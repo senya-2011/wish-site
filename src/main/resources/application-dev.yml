@@ -1,0 +1,5 @@
+dabwish:
+  buildNumber: 1.0-dev
+logging:
+  level:
+    root: INFO
