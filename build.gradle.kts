@@ -7,7 +7,9 @@ plugins {
     id("org.springframework.boot") version "3.3.5" apply false
     id("io.spring.dependency-management") version "1.1.6" apply false
     id("org.openapi.generator") version "7.6.0" apply false
+    id("com.github.davidmc24.gradle.plugin.avro") version "1.8.0" apply false
 }
+
 
 allprojects {
     group = "com.dabwish"
@@ -15,16 +17,23 @@ allprojects {
 
     repositories {
         mavenCentral()
+        maven {
+            url = uri("https://packages.confluent.io/maven")
+        }
     }
 }
 
 subprojects {
-    apply(plugin = "org.jetbrains.kotlin.jvm")
-    apply(plugin = "io.spring.dependency-management")
+    if (name != "event-contracts") {
+        pluginManager.apply("org.jetbrains.kotlin.jvm")
+    }
+    pluginManager.apply("io.spring.dependency-management")
 
-    configure<JavaPluginExtension> {
-        toolchain {
-            languageVersion.set(JavaLanguageVersion.of(21))
+    pluginManager.withPlugin("java") {
+        extensions.configure(JavaPluginExtension::class.java) {
+            toolchain {
+                languageVersion.set(JavaLanguageVersion.of(21))
+            }
         }
     }
 }

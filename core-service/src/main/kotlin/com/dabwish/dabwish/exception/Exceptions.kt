@@ -7,3 +7,6 @@ class UserNotFoundException(id: Long) : AppException("User with id:$id not found
 class UserAlreadyExistsException(name: String) : AppException("User with name $name already exists")
 
 class InvalidPasswordException(msg: String) : AppException(msg)
+
+class MissingCreatedAtException(userId: Long) :
+    AppException("User $userId has null createdAt after persistence")

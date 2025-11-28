@@ -15,6 +15,17 @@ spring:
       ddl-auto: none
   profiles:
     active: ${SPRING_ACTIVE_PROFILE:dev}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9094}
+    properties:
+      schema.registry.url: ${SCHEMA_REGISTRY_URL:http://localhost:8081}
+      specific.avro.reader: true
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
+      properties:
+        auto.register.schemas: true
+
 
 server:
   port: ${MY_PORT:8080}
@@ -23,3 +34,9 @@ logging:
     root: WARN
     liquibase: INFO
     org.springframework.boot.autoconfigure.liquibase: INFO
+
+app:
+  kafka:
+    enabled: true
+    topics:
+      user-created: ${USER-CREATED-KAFKA:user-created-events}

@@ -14,6 +14,8 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation(project(":api-lib"))
+    implementation(project(":event-contracts"))
+    implementation("org.springframework.kafka:spring-kafka")
 
     runtimeOnly("org.postgresql:postgresql")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
@@ -28,12 +30,14 @@ dependencies {
     implementation("jakarta.annotation:jakarta.annotation-api")
 
     implementation("org.springframework.security:spring-security-crypto:6.3.3")
+    implementation("io.confluent:kafka-avro-serializer:7.6.0")
 
     developmentOnly("org.springframework.boot:spring-boot-devtools")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     testImplementation("com.h2database:h2")
+    testImplementation("org.springframework.kafka:spring-kafka-test")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 

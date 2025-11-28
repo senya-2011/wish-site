@@ -1,5 +1,6 @@
 package com.dabwish.dabwish.controller
 
+import com.dabwish.dabwish.exception.MissingCreatedAtException
 import com.dabwish.dabwish.exception.UserAlreadyExistsException
 import com.dabwish.dabwish.exception.UserNotFoundException
 import org.springframework.http.HttpStatus
@@ -23,6 +24,16 @@ class GlobalExceptionHandler {
         )
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse)
     }
+
+    @ExceptionHandler(MissingCreatedAtException::class)
+    fun handleMissingCreatedAt(e: MissingCreatedAtException): ResponseEntity<Error> =
+        ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            .body(
+                Error(
+                    code = HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                    message = e.message ?: "Missing createdAt",
+                ),
+            )
 
     // 2. Обработка "Уже существует" -> 409 Conflict
     @ExceptionHandler(UserAlreadyExistsException::class)
