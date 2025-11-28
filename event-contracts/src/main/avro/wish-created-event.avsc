@@ -1,0 +1,46 @@
+{
+  "type" : "record",
+  "name" : "WishCreatedEvent",
+  "namespace" : "com.dabwish.events.wish",
+  "doc" : "Event emitted whenever a new wish is created.",
+  "fields" : [
+    {
+      "name" : "wishId",
+      "type" : "long",
+      "doc" : "Unique identifier of the wish."
+    },
+    {
+      "name" : "ownerId",
+      "type" : "long",
+      "doc" : "ID of the user who created this wish."
+    },
+    {
+      "name" : "title",
+      "type" : "string",
+      "doc" : "Title of the wish."
+    },
+    {
+      "name" : "description",
+      "type" : [ "null", "string" ],
+      "default" : null,
+      "doc" : "Detailed description (optional)."
+    },
+    {
+      "name" : "price",
+      "type" : [ "null", "double" ],
+      "default" : null,
+      "doc" : "Estimated price (optional)."
+    },
+    {
+      "name" : "photoUrl",
+      "type" : [ "null", "string" ],
+      "default" : null,
+      "doc" : "Link to the wish photo (optional)."
+    },
+    {
+      "name" : "createdAt",
+      "type" : "string",
+      "doc" : "ISO-8601 timestamp."
+    }
+  ]
+}
