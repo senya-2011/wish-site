@@ -40,3 +40,5 @@ app:
     enabled: true
     topics:
       user-created: ${USER-CREATED-KAFKA:user-created-events}
+      wish-created: ${WISH-CREATED-KAFKA:wish-created-events}
+      wish-updated: ${WISH-UPDATED-KAFKA:wish-updated-events}

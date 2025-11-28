@@ -4,7 +4,6 @@ import com.dabwish.dabwish.model.user.User
 import com.dabwish.dabwish.exception.MissingCreatedAtException
 import com.dabwish.dabwish.mapper.UserMapper
 import com.dabwish.events.user.UserCreatedEvent
-import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
