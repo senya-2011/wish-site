@@ -1,6 +1,7 @@
 package com.dabwish.dabwish.events
 
 import com.dabwish.dabwish.model.user.User
+import com.dabwish.dabwish.exception.MissingCreatedAtException
 import com.dabwish.dabwish.mapper.UserMapper
 import com.dabwish.events.user.UserCreatedEvent
 import java.time.OffsetDateTime
@@ -25,9 +26,11 @@ class UserEventPublisher(
             return
         }
 
-        val createdAt = user.createdAt?.format(formatter) ?: OffsetDateTime.now().format(formatter)
+        val createdAtIso = user.createdAt
+            ?.format(formatter)
+            ?: throw MissingCreatedAtException(user.id)
 
-        val event = userMapper.userToUserCreatedEvent(user, createdAt)
+        val event = userMapper.userToUserCreatedEvent(user, createdAtIso)
 
         kafkaTemplate.send(topic, user.id.toString(), event)
     }
