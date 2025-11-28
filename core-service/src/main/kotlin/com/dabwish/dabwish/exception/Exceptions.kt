@@ -10,3 +10,7 @@ class InvalidPasswordException(msg: String) : AppException(msg)
 
 class MissingCreatedAtException(userId: Long) :
     AppException("User $userId has null createdAt after persistence")
+
+
+// Wishes
+class WishNotFoundException(id: Long) : AppException("Wish with id:$id not found")
