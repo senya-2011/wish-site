@@ -196,6 +196,7 @@ components:
           enum:
             - admin
             - member
+          default: member
           description: Новая роль (опционально)
         password:
           type: string
