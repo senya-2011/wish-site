@@ -1,4 +1,4 @@
-openapi: 3.0.4
+openapi: 3.1.0
 info:
   title: Wish site OpenAPI spec
   version: 0.0.1
@@ -216,10 +216,6 @@ components:
           type: string
           example: Page not found
           
-    
-    
-    
-    
     
     
     
