@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service
 class UserService(
     private val userRepository: UserRepository,
     private val userMapper: UserMapper,
-    private val userEventPublisher: UserEventPublisher? = null,
+    @Autowired(required = false) private val userEventPublisher: UserEventPublisher?,
 ) {
     fun findAll(): List<User> = userRepository.findAll()
 
