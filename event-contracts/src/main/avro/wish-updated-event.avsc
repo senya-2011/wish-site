@@ -1,0 +1,47 @@
+{
+  "type" : "record",
+  "name" : "WishUpdatedEvent",
+  "namespace" : "com.dabwish.events.wish",
+  "doc" : "Event emitted whenever a wish is updated. Null fields indicate no change.",
+  "fields" : [
+    {
+      "name" : "wishId",
+      "type" : "long",
+      "doc" : "Unique identifier of the updated wish."
+    },
+    {
+      "name" : "ownerId",
+      "type" : "long",
+      "doc" : "ID of the user who owns this wish."
+    },
+    {
+      "name" : "title",
+      "type" : [ "null", "string" ],
+      "default" : null,
+      "doc" : "New title (if changed)."
+    },
+    {
+      "name" : "description",
+      "type" : [ "null", "string" ],
+      "default" : null,
+      "doc" : "New description (if changed)."
+    },
+    {
+      "name" : "price",
+      "type" : [ "null", "double" ],
+      "default" : null,
+      "doc" : "New price (if changed)."
+    },
+    {
+      "name" : "photoUrl",
+      "type" : [ "null", "string" ],
+      "default" : null,
+      "doc" : "New photo URL (if changed)."
+    },
+    {
+      "name" : "updatedAt",
+      "type" : "string",
+      "doc" : "ISO-8601 timestamp of the update."
+    }
+  ]
+}
