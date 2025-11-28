@@ -22,10 +22,6 @@ class UserEventPublisher(
     private val formatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME
 
     fun publishUserCreated(user: User) {
-        if (user.id == 0L) {
-            return
-        }
-
         val createdAtIso = user.createdAt
             ?.format(formatter)
             ?: throw MissingCreatedAtException(user.id)
