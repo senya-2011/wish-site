@@ -39,7 +39,7 @@ abstract class UserMapper {
 
     // POST / CREATE
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "createdAt", expression = "java(java.time.OffsetDateTime.now())")
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "hashPassword", constant = "")
     @Mapping(target = "role", constant = "MEMBER")

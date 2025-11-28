@@ -33,7 +33,7 @@ data class User(
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
-    var createdAt: OffsetDateTime? = null,
+    var createdAt: OffsetDateTime = OffsetDateTime.now(),
 
     @UpdateTimestamp
     @Column(name = "updated_at")
