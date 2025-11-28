@@ -8,6 +8,7 @@ import com.dabwish.dabwish.mapper.UserMapper
 import com.dabwish.dabwish.model.user.User
 import com.dabwish.dabwish.repository.UserRepository
 import jakarta.transaction.Transactional
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
 @Service
