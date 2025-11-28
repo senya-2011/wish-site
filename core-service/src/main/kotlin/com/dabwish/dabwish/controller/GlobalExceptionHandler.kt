@@ -56,7 +56,7 @@ class GlobalExceptionHandler {
     fun handleGeneral(e: Exception): ResponseEntity<Error> {
         val errorResponse = Error(
             code = HttpStatus.INTERNAL_SERVER_ERROR.value(),
-            message = "Internal Server Error. Please contact support."
+            message = "${e}",
         )
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse)
     }

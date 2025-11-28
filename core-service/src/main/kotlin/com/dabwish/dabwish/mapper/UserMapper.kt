@@ -34,7 +34,7 @@ abstract class UserMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
-    @Mapping(target = "hashPassword", ignore = true)
+    @Mapping(target = "hashPassword", constant = "")
     @Mapping(target = "role", constant = "MEMBER")
     abstract fun userRequestToUser(userRequest: UserRequest): User
 

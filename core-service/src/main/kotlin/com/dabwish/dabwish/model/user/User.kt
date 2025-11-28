@@ -29,7 +29,7 @@ data class User(
     var role: UserRole,
 
     @Column(name = "password_hash", nullable = false)
-    var hashPassword: String,
+    var hashPassword: String = "",
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
