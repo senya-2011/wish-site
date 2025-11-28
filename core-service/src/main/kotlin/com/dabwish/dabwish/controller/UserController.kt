@@ -50,4 +50,6 @@ class UserController(
         val userResponse = userMapper.userToUserResponse(user)
         return ResponseEntity.ok(userResponse)
     }
+
+
 }
