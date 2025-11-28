@@ -5,6 +5,8 @@ import com.dabwish.dabwish.generated.dto.UserResponse
 import com.dabwish.dabwish.generated.dto.UserUpdateRequest
 import com.dabwish.dabwish.model.user.User
 import com.dabwish.dabwish.model.user.UserRole
+import com.dabwish.events.user.UserCreatedEvent
+import com.dabwish.events.user.UserRole as AvroUserRole
 import org.mapstruct.AfterMapping
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping
@@ -28,6 +30,11 @@ abstract class UserMapper {
     @Mapping(source = "role", target = "role", qualifiedByName = ["userRoleToResponseRole"])
     abstract fun userToUserResponse(user: User): UserResponse
     abstract fun userListToUserResponseList(users: List<User>): List<UserResponse>
+
+    @Mapping(target = "userId", source = "user.id")
+    @Mapping(target = "createdAt", source = "createdAtIso")
+    @Mapping(target = "role", source = "user.role", qualifiedByName = ["userRoleToAvro"])
+    abstract fun userToUserCreatedEvent(user: User, createdAtIso: String): UserCreatedEvent
 
 
     // POST / CREATE
@@ -83,4 +90,11 @@ abstract class UserMapper {
             null -> null
         }
     }
+
+    @Named("userRoleToAvro")
+    fun mapUserRoleToAvro(role: UserRole): AvroUserRole =
+        when (role) {
+            UserRole.MEMBER -> AvroUserRole.MEMBER
+            UserRole.ADMIN -> AvroUserRole.ADMIN
+        }
 }

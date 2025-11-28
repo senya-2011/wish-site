@@ -1,5 +1,6 @@
 package com.dabwish.dabwish.service
 
+import com.dabwish.dabwish.events.UserEventPublisher
 import com.dabwish.dabwish.exception.UserNotFoundException
 import com.dabwish.dabwish.generated.dto.UserRequest
 import com.dabwish.dabwish.generated.dto.UserUpdateRequest
@@ -12,7 +13,8 @@ import org.springframework.stereotype.Service
 @Service
 class UserService(
     private val userRepository: UserRepository,
-    private val userMapper: UserMapper
+    private val userMapper: UserMapper,
+    private val userEventPublisher: UserEventPublisher? = null,
 ) {
     fun findAll(): List<User> = userRepository.findAll()
 
@@ -24,7 +26,9 @@ class UserService(
     @Transactional
     fun create(userRequest: UserRequest): User {
         val user = userMapper.userRequestToUser(userRequest)
-        return userRepository.save(user)
+        val saved = userRepository.save(user)
+        userEventPublisher?.publishUserCreated(saved)
+        return saved
     }
 
     @Transactional

@@ -3,9 +3,25 @@ spring:
     name: notification-service
   profiles:
     active: ${SPRING_ACTIVE_PROFILE:dev}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9094}
+    properties:
+      schema.registry.url: ${SCHEMA_REGISTRY_URL:http://localhost:8081}
+      specific.avro.reader: true
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: io.confluent.kafka.serializers.KafkaAvroDeserializer
+      group-id: notification-service
+      auto-offset-reset: earliest
 
 server:
   port: ${MY_NOTIFICATION_PORT:10081}
 logging:
   level:
     root: INFO
+
+app:
+  kafka:
+    enabled: true
+    topics:
+      user-created: ${USER-CREATED-KAFKA:user-created-events}

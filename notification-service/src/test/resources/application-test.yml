@@ -1,20 +1,9 @@
 spring:
   kafka:
-    bootstrap-servers: localhost:9092
-    consumer:
-      group-id: test-group
-      auto-offset-reset: earliest
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    bootstrap-servers: localhost:9094
+    properties:
+      schema.registry.url: http://localhost:8081
 
-server:
-  port: 0
-
-logging:
-  level:
-    root: WARN
-    org.springframework.kafka: WARN
-
+app:
+  kafka:
+    enabled: false

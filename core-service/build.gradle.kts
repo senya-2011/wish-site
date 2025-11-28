@@ -30,6 +30,7 @@ dependencies {
     implementation("jakarta.annotation:jakarta.annotation-api")
 
     implementation("org.springframework.security:spring-security-crypto:6.3.3")
+    implementation("io.confluent:kafka-avro-serializer:7.6.0")
 
     developmentOnly("org.springframework.boot:spring-boot-devtools")
 
