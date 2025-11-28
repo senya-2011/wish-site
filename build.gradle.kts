@@ -9,6 +9,7 @@ plugins {
     id("org.openapi.generator") version "7.6.0" apply false
 }
 
+
 allprojects {
     group = "com.dabwish"
     version = "0.0.1"
