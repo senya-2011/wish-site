@@ -4,8 +4,12 @@ import com.dabwish.dabwish.generated.api.UsersApi
 import com.dabwish.dabwish.generated.dto.UserRequest
 import com.dabwish.dabwish.generated.dto.UserResponse
 import com.dabwish.dabwish.generated.dto.UserUpdateRequest
+import com.dabwish.dabwish.generated.dto.WishRequest
+import com.dabwish.dabwish.generated.dto.WishResponse
 import com.dabwish.dabwish.mapper.UserMapper
+import com.dabwish.dabwish.mapper.WishMapper
 import com.dabwish.dabwish.service.UserService
+import com.dabwish.dabwish.service.WishService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.RestController
 
@@ -13,6 +17,8 @@ import org.springframework.web.bind.annotation.RestController
 class UserController(
     private val userMapper: UserMapper,
     private val userService: UserService,
+    private val wishService: WishService,
+    private val wishMapper: WishMapper,
 ) : UsersApi{
 
     // GET
@@ -51,5 +57,19 @@ class UserController(
         return ResponseEntity.ok(userResponse)
     }
 
+    // WISHES
+    override fun createWish(
+        userId: Long,
+        wishRequest: WishRequest
+    ): ResponseEntity<WishResponse> {
+        val wish = wishService.create(userId, wishRequest)
+        val wishResponse = wishMapper.toResponse(wish)
+        return ResponseEntity.ok(wishResponse)
+    }
 
+    override fun getUserWishes(userId: Long): ResponseEntity<List<WishResponse>> {
+        val wishes = wishService.findAllByUserId(userId)
+        val wishesResponse = wishMapper.toResponseList(wishes)
+        return ResponseEntity.ok(wishesResponse)
+    }
 }
