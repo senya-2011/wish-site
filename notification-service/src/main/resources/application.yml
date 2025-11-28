@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: notification-service
+  profiles:
+    active: ${SPRING_ACTIVE_PROFILE:dev}
+
+server:
+  port: ${MY_NOTIFICATION_PORT:10081}
+logging:
+  level:
+    root: INFO

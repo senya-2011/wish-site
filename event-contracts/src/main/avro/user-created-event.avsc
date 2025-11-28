@@ -1,0 +1,33 @@
+{
+  "type" : "record",
+  "name" : "UserCreatedEvent",
+  "namespace" : "com.dabwish.events.user",
+  "doc" : "Event emitted whenever a new user is created.",
+  "fields" : [
+    {
+      "name" : "userId",
+      "type" : "long",
+      "doc" : "Identifier of the created user."
+    },
+    {
+      "name" : "name",
+      "type" : "string",
+      "doc" : "Display name of the user."
+    },
+    {
+      "name" : "role",
+      "type" : {
+        "type" : "enum",
+        "name" : "UserRole",
+        "symbols" : [ "MEMBER", "ADMIN" ],
+        "doc" : "Role assigned to the user."
+      }
+    },
+    {
+      "name" : "createdAt",
+      "type" : "string",
+      "doc" : "ISO-8601 timestamp of the creation date."
+    }
+  ]
+}
+

@@ -14,6 +14,7 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation(project(":api-lib"))
+    implementation(project(":event-contracts"))
     implementation("org.springframework.kafka:spring-kafka")
 
     runtimeOnly("org.postgresql:postgresql")
