@@ -29,7 +29,10 @@ class SecurityConfig(
         JwtAuthenticationFilter(jwtTokenProvider, userRepository)
 
     @Bean
-    fun securityFilterChain(http: HttpSecurity): SecurityFilterChain {
+    fun securityFilterChain(
+        http: HttpSecurity,
+        jwtAuthenticationFilter: JwtAuthenticationFilter,
+    ): SecurityFilterChain {
         http
             .csrf { it.disable() }
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
@@ -42,7 +45,7 @@ class SecurityConfig(
                 ).permitAll()
                     .anyRequest().authenticated()
             }
-            .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter::class.java)
+            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter::class.java)
 
         return http.build()
     }
