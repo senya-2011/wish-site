@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { usersApi } from "../lib/api-client";
-import type { UserRequest } from "../api"; // Импортируем сгенерированный DTO
+import type { UserRequest } from "../api"; 
 
 export const CreateUserForm = () => {
   const [name, setName] = useState("");
@@ -9,13 +9,11 @@ export const CreateUserForm = () => {
   
   const queryClient = useQueryClient();
 
-  // Настраиваем мутацию
   const mutation = useMutation({
     mutationFn: (newUser: UserRequest) => {
       return usersApi.createUser(newUser);
     },
     onSuccess: () => {
-      // Когда юзер создан, говорим React Query: "Список юзеров устарел, обнови его!"
       queryClient.invalidateQueries({ queryKey: ["users"] });
       setName("");
       setPassword("");
@@ -25,33 +23,42 @@ export const CreateUserForm = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Вызываем мутацию
     mutation.mutate({ name, password });
   };
 
   return (
-    <form onSubmit={handleSubmit} className="p-4 border mt-4">
-      <h3 className="font-bold">Добавить юзера</h3>
-      <input
-        placeholder="Имя"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        className="border p-1 mr-2"
-      />
-      <input
-        type="password"
-        placeholder="Пароль"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        className="border p-1 mr-2"
-      />
-      <button 
-        type="submit" 
-        disabled={mutation.isPending}
-        className="bg-blue-500 text-white p-1 rounded"
-      >
-        {mutation.isPending ? "Создаем..." : "Создать"}
-      </button>
-    </form>
+    <div className="card">
+      <h3>Создать пользователя</h3>
+      <form onSubmit={handleSubmit} className="form">
+        <input
+          placeholder="Имя"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="form-input"
+          required
+        />
+        <input
+          type="password"
+          placeholder="Пароль"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="form-input"
+          required
+        />
+        <button
+          type="submit"
+          disabled={mutation.isPending}
+          className="button"
+        >
+          {mutation.isPending ? "Создаем..." : "Создать"}
+        </button>
+      </form>
+      {mutation.isError && (
+        <p className="error">Не удалось создать пользователя</p>
+      )}
+      {mutation.isSuccess && (
+        <p className="notice">Пользователь создан</p>
+      )}
+    </div>
   );
 };

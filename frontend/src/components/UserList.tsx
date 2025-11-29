@@ -3,23 +3,29 @@ import { usersApi } from "../lib/api-client";
 
 export const UserList = () => {
   const { data: users, isLoading, isError } = useQuery({
-    queryKey: ["users"], 
+    queryKey: ["users"],
     queryFn: async () => {
-      const response = await usersApi.getAllUsers(); 
-      return response.data; 
+      const response = await usersApi.getAllUsers();
+      return response.data;
     },
   });
 
-  if (isLoading) return <div>Загрузка юзеров...</div>;
-  if (isError) return <div>Ошибка при загрузке!</div>;
+  if (isLoading) {
+    return <div className="card text-muted">Загрузка пользователей...</div>;
+  }
+
+  if (isError) {
+    return <div className="card error">Ошибка при загрузке списка</div>;
+  }
 
   return (
-    <div className="p-4">
-      <h2 className="text-xl font-bold mb-4">Список пользователей</h2>
-      <ul className="space-y-2">
+    <div className="card">
+      <h3>Список пользователей</h3>
+      <ul className="simple-list">
         {users?.map((user) => (
-          <li key={user.user_id} className="border p-2 rounded shadow">
-            {user.name} <span className="text-gray-500">({user.role})</span>
+          <li key={user.user_id}>
+            <span>{user.name}</span>
+            <span className="pill">{user.role}</span>
           </li>
         ))}
       </ul>
