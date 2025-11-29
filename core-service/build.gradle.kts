@@ -32,6 +32,9 @@ dependencies {
 
     implementation("org.springframework.security:spring-security-crypto:6.3.3")
     implementation("io.confluent:kafka-avro-serializer:7.6.0")
+    implementation("io.jsonwebtoken:jjwt-api:0.12.6")
+    runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.6")
+    runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.6")
 
     developmentOnly("org.springframework.boot:spring-boot-devtools")
 
