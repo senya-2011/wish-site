@@ -91,7 +91,7 @@ class UserServiceTest {
         verifySequence {
             userMapper.userRequestToUser(request)
             userRepository.save(newUser)
-            userEventPublisher.publishUserCreated(savedUser) // Важно: событие должно уйти!
+            userEventPublisher.publishUserCreated(savedUser)
         }
     }
 
