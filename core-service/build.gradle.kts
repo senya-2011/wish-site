@@ -38,6 +38,7 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     testImplementation("com.h2database:h2")
     testImplementation("org.springframework.kafka:spring-kafka-test")
+    testImplementation("com.ninja-squad:springmockk:4.0.2")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 

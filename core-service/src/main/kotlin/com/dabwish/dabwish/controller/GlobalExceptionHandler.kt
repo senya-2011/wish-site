@@ -56,7 +56,6 @@ class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException::class)
     fun handleValidation(e: MethodArgumentNotValidException): ResponseEntity<Error> {
-        // Собираем все ошибки полей в одну строку
         val errors = e.bindingResult.fieldErrors.joinToString(", ") {
             "${it.field}: ${it.defaultMessage}"
         }
