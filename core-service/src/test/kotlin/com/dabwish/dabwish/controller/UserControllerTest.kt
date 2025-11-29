@@ -63,7 +63,7 @@ class UserControllerTest(
 
     //GetAllUsers
     @Test
-    fun `getAllUsers return 2000 and list of all users`(){
+    fun `getAllUsers return 200 and list of all users`(){
         every { userService.findAll() } returns users
         every { userMapper.userListToUserResponseList(users) } returns responseUsers
 
