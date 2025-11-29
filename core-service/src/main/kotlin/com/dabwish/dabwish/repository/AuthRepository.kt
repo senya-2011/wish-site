@@ -11,5 +11,5 @@ class AuthRepository(
 
     fun save(user: User): User = userRepository.save(user)
 
-    fun existsByName(name: String): Boolean = userRepository.findByName(name) != null
+    fun existsByName(name: String): Boolean = userRepository.existsByName(name)
 }
