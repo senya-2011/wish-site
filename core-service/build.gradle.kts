@@ -6,6 +6,7 @@ plugins {
 
     id("org.springframework.boot")
     id("io.spring.dependency-management")
+    id("checkstyle")
 }
 
 dependencies {
@@ -47,6 +48,17 @@ kapt {
     arguments {
         arg("mapstruct.defaultComponentModel", "spring")
     }
+}
+
+checkstyle {
+    toolVersion = "10.15.0"
+    configDirectory.set(layout.projectDirectory.dir("config/checkstyle"))
+    maxWarnings = 0
+    isIgnoreFailures = false
+}
+
+tasks.named("check") {
+    dependsOn("checkstyleMain", "checkstyleTest")
 }
 
 tasks.withType<Test> {
