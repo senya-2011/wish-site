@@ -1,6 +1,8 @@
 package com.dabwish.dabwish.security
 
 import com.dabwish.dabwish.model.user.User
+import io.jsonwebtoken.ExpiredJwtException
+import io.jsonwebtoken.JwtException
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.SignatureAlgorithm
 import io.jsonwebtoken.security.Keys
@@ -16,6 +18,7 @@ class JwtTokenProvider(
 ) {
 
     private val signingKey = Keys.hmacShaKeyFor(secret.toByteArray(StandardCharsets.UTF_8))
+    private val parser = Jwts.parser().verifyWith(signingKey).build()
 
     fun generateToken(user: User): String {
         val now = Date()
@@ -30,6 +33,21 @@ class JwtTokenProvider(
             .signWith(signingKey, SignatureAlgorithm.HS256)
             .compact()
     }
+
+    fun validateToken(token: String): Boolean =
+        try {
+            parser.parseSignedClaims(token)
+            true
+        } catch (ex: ExpiredJwtException) {
+            false
+        } catch (ex: JwtException) {
+            false
+        } catch (ex: IllegalArgumentException) {
+            false
+        }
+
+    fun getUserId(token: String): Long? =
+        runCatching { parser.parseSignedClaims(token).payload.subject.toLong() }.getOrNull()
 
     fun getExpirationSeconds(): Long = expirationSeconds
 }
