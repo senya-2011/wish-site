@@ -98,7 +98,7 @@ class WishControllerTest(
             title = "PS5Pro",
         )
         val wishUpdated = Wish(
-            id = user.id,
+            id = wish.id,
             title = "PS5Pro",
             user = wish.user,
         )
