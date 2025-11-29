@@ -97,12 +97,13 @@ class AuthServiceTest {
         val result = authService.register(request)
 
         assertEquals(response, result)
-        assertEquals("encoded", toPersist.hashPassword)
         verify {
             authRepository.existsByName("new")
             authMapper.registerRequestToUser(request)
             passwordEncoder.encode("secret1")
-            authRepository.save(toPersist)
+            authRepository.save(withArg { candidate ->
+                assertEquals("encoded", candidate.hashPassword)
+            })
             jwtTokenProvider.generateToken(saved)
             authMapper.toLoginResponse(saved, "jwt", 3600)
         }
