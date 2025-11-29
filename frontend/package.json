@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "lint": "eslint . --max-warnings=0",
     "generate-api": "openapi-generator-cli generate -i ../api-lib/openapi.yml -g typescript-axios -o ./src/api -c openapi-config.json"
   },
   "dependencies": {
