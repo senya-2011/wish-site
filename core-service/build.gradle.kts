@@ -39,6 +39,8 @@ dependencies {
     testImplementation("com.h2database:h2")
     testImplementation("org.springframework.kafka:spring-kafka-test")
     testImplementation("com.ninja-squad:springmockk:4.0.2")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
+    testImplementation("org.mockito:mockito-junit-jupiter:5.12.0")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
