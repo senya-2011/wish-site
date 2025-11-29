@@ -112,7 +112,7 @@ class WishControllerTest(
         every { wishService.update(wish.id, wishUpdateRequest) } returns wishUpdated
         every { wishMapper.toResponse(wishUpdated) } returns wishUpdatedResponse
 
-        mockMvc.patch("/api/wishes/${user.id}") {
+        mockMvc.patch("/api/wishes/${wish.id}") {
             contentType = MediaType.APPLICATION_JSON
             content = objectMapper.writeValueAsString(wishUpdateRequest)
         }.andExpect {
