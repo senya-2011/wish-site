@@ -4,10 +4,10 @@ import com.dabwish.dabwish.model.user.User
 import io.jsonwebtoken.ExpiredJwtException
 import io.jsonwebtoken.JwtException
 import io.jsonwebtoken.Jwts
-import io.jsonwebtoken.SignatureAlgorithm
 import io.jsonwebtoken.security.Keys
 import java.nio.charset.StandardCharsets
 import java.util.Date
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 
@@ -17,6 +17,7 @@ class JwtTokenProvider(
     @Value("\${app.jwt.expiration-seconds}") private val expirationSeconds: Long,
 ) {
 
+    private val logger = LoggerFactory.getLogger(JwtTokenProvider::class.java)
     private val signingKey = Keys.hmacShaKeyFor(secret.toByteArray(StandardCharsets.UTF_8))
     private val parser = Jwts.parser().verifyWith(signingKey).build()
 
@@ -47,7 +48,12 @@ class JwtTokenProvider(
         }
 
     fun getUserId(token: String): Long? =
-        runCatching { parser.parseSignedClaims(token).payload.subject.toLong() }.getOrNull()
+        try {
+            parser.parseSignedClaims(token).payload.subject.toLong()
+        } catch (ex: Exception) {
+            logger.warn("Failed to parse user id from token: {}", ex.message)
+            null
+        }
 
     fun getExpirationSeconds(): Long = expirationSeconds
 }
