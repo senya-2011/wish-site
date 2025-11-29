@@ -1,6 +1,6 @@
 package com.dabwish.dabwish.service
 
-import com.dabwish.dabwish.exception.InvalidPasswordException
+import com.dabwish.dabwish.exception.InvalidCredentialsException
 import com.dabwish.dabwish.exception.UserAlreadyExistsException
 import com.dabwish.dabwish.exception.UsernameNotFoundException
 import com.dabwish.dabwish.generated.dto.LoginRequest
@@ -25,7 +25,7 @@ class AuthService(
             ?: throw UsernameNotFoundException(request.name)
 
         if (!passwordEncoder.matches(request.password, user.hashPassword)) {
-            throw InvalidPasswordException("Password mismatch")
+            throw InvalidCredentialsException("Invalid Credentials")
         }
 
         val token = jwtTokenProvider.generateToken(user)

@@ -1,5 +1,6 @@
 package com.dabwish.dabwish.controller
 
+import com.dabwish.dabwish.exception.InvalidCredentialsException
 import com.dabwish.dabwish.exception.MissingCreatedAtException
 import com.dabwish.dabwish.exception.UserAlreadyExistsException
 import com.dabwish.dabwish.exception.UsernameNotFoundException
@@ -64,6 +65,15 @@ class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse)
     }
 
+    @ExceptionHandler(InvalidCredentialsException::class)
+    fun handleConflict(e: InvalidCredentialsException): ResponseEntity<Error> {
+        val errorResponse = Error(
+            code = HttpStatus.CONFLICT.value(),
+            message = e.message ?: "Conflict"
+        )
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse)
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException::class)
     fun handleValidation(e: MethodArgumentNotValidException): ResponseEntity<Error> {
         val errors = e.bindingResult.fieldErrors.joinToString(", ") {
@@ -76,6 +86,8 @@ class GlobalExceptionHandler {
         )
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse)
     }
+
+
 
     @ExceptionHandler(Exception::class)
     fun handleGeneral(e: Exception): ResponseEntity<Error> {
