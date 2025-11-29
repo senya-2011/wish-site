@@ -2,7 +2,7 @@ package com.dabwish.dabwish.service
 
 import com.dabwish.dabwish.exception.InvalidPasswordException
 import com.dabwish.dabwish.exception.UserAlreadyExistsException
-import com.dabwish.dabwish.exception.UserNotFoundException
+import com.dabwish.dabwish.exception.UsernameNotFoundException
 import com.dabwish.dabwish.generated.dto.LoginRequest
 import com.dabwish.dabwish.generated.dto.LoginResponse
 import com.dabwish.dabwish.generated.dto.RegisterRequest
@@ -22,7 +22,7 @@ class AuthService(
 
     fun login(request: LoginRequest): LoginResponse {
         val user = authRepository.findByName(request.name)
-            ?: throw UserNotFoundException(-1)
+            ?: throw UsernameNotFoundException(request.name)
 
         if (!passwordEncoder.matches(request.password, user.hashPassword)) {
             throw InvalidPasswordException("Password mismatch")

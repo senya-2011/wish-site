@@ -2,7 +2,7 @@ package com.dabwish.dabwish.service
 
 import com.dabwish.dabwish.exception.InvalidPasswordException
 import com.dabwish.dabwish.exception.UserAlreadyExistsException
-import com.dabwish.dabwish.exception.UserNotFoundException
+import com.dabwish.dabwish.exception.UsernameNotFoundException
 import com.dabwish.dabwish.generated.dto.LoginRequest
 import com.dabwish.dabwish.generated.dto.LoginResponse
 import com.dabwish.dabwish.generated.dto.RegisterRequest
@@ -61,7 +61,7 @@ class AuthServiceTest {
         val request = LoginRequest(name = "missing", password = "plain")
         every { authRepository.findByName("missing") } returns null
 
-        assertThrows(UserNotFoundException::class.java) {
+        assertThrows(UsernameNotFoundException::class.java) {
             authService.login(request)
         }
     }
