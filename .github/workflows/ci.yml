@@ -79,6 +79,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set up JDK 21 (OpenAPI generator)
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
       - name: Set up Node 20
         uses: actions/setup-node@v4
         with:

@@ -5,8 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "prelint": "npm run generate-api",
     "lint": "eslint . --max-warnings=0",
+    "prebuild": "npm run generate-api",
+    "build": "tsc && vite build",
     "generate-api": "openapi-generator-cli generate -i ../api-lib/openapi.yml -g typescript-axios -o ./src/api -c openapi-config.json"
   },
   "dependencies": {
