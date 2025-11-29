@@ -42,3 +42,6 @@ app:
       user-created: ${USER-CREATED-KAFKA:user-created-events}
       wish-created: ${WISH-CREATED-KAFKA:wish-created-events}
       wish-updated: ${WISH-UPDATED-KAFKA:wish-updated-events}
+  jwt:
+    secret: ${APP_JWT_SECRET:Xtd5Fk7WIZS4tpwRMaqqTlaJBVkRpr3U}
+    expiration-seconds: ${APP_JWT_EXPIRATION:3600}

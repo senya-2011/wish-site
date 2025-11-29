@@ -1,5 +1,6 @@
 package com.dabwish.dabwish.controller
 
+import com.dabwish.dabwish.config.SecurityConfig
 import com.dabwish.dabwish.generated.dto.UserRequest
 import com.dabwish.dabwish.generated.dto.UserResponse
 import com.dabwish.dabwish.generated.dto.UserUpdateRequest
@@ -18,7 +19,10 @@ import io.mockk.every
 import io.mockk.verify
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
+import org.springframework.context.annotation.ComponentScan
+import org.springframework.context.annotation.FilterType
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.delete
@@ -28,7 +32,16 @@ import org.springframework.test.web.servlet.post
 import java.time.OffsetDateTime
 
 
-@WebMvcTest(UserController::class)
+@WebMvcTest(
+    controllers = [UserController::class],
+    excludeFilters = [
+        ComponentScan.Filter(
+            type = FilterType.ASSIGNABLE_TYPE,
+            classes = [SecurityConfig::class],
+        ),
+    ],
+)
+@AutoConfigureMockMvc(addFilters = false)
 class UserControllerTest(
     @Autowired val mockMvc: MockMvc,
     @Autowired val objectMapper: ObjectMapper,

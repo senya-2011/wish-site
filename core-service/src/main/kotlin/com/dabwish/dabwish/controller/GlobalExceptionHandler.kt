@@ -1,7 +1,9 @@
 package com.dabwish.dabwish.controller
 
+import com.dabwish.dabwish.exception.InvalidCredentialsException
 import com.dabwish.dabwish.exception.MissingCreatedAtException
 import com.dabwish.dabwish.exception.UserAlreadyExistsException
+import com.dabwish.dabwish.exception.UsernameNotFoundException
 import com.dabwish.dabwish.exception.UserNotFoundException
 import com.dabwish.dabwish.exception.WishNotFoundException
 import org.springframework.http.HttpStatus
@@ -27,6 +29,15 @@ class GlobalExceptionHandler {
 
     @ExceptionHandler(WishNotFoundException::class)
     fun handleNotFound(e: WishNotFoundException): ResponseEntity<Error> {
+    @ExceptionHandler(UsernameNotFoundException::class)
+    fun handleUsernameNotFound(e: UsernameNotFoundException): ResponseEntity<Error> =
+        ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+            Error(
+                code = HttpStatus.NOT_FOUND.value(),
+                message = e.message ?: "User not found",
+            ),
+        )
+
 
         val errorResponse = Error(
             code = HttpStatus.NOT_FOUND.value(),
@@ -54,6 +65,15 @@ class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse)
     }
 
+    @ExceptionHandler(InvalidCredentialsException::class)
+    fun handleConflict(e: InvalidCredentialsException): ResponseEntity<Error> {
+        val errorResponse = Error(
+            code = HttpStatus.CONFLICT.value(),
+            message = e.message ?: "Conflict"
+        )
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse)
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException::class)
     fun handleValidation(e: MethodArgumentNotValidException): ResponseEntity<Error> {
         val errors = e.bindingResult.fieldErrors.joinToString(", ") {
@@ -66,6 +86,8 @@ class GlobalExceptionHandler {
         )
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse)
     }
+
+
 
     @ExceptionHandler(Exception::class)
     fun handleGeneral(e: Exception): ResponseEntity<Error> {
