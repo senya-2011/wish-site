@@ -1,6 +1,6 @@
 package com.dabwish.dabwish.service
 
-import com.dabwish.dabwish.exception.InvalidPasswordException
+import com.dabwish.dabwish.exception.InvalidCredentialsException
 import com.dabwish.dabwish.exception.UserAlreadyExistsException
 import com.dabwish.dabwish.exception.UsernameNotFoundException
 import com.dabwish.dabwish.generated.dto.LoginRequest
@@ -74,7 +74,7 @@ class AuthServiceTest {
         every { authRepository.findByName("user") } returns user
         every { passwordEncoder.matches("plain", "hashed") } returns false
 
-        assertThrows(InvalidPasswordException::class.java) {
+        assertThrows(InvalidCredentialsException::class.java) {
             authService.login(request)
         }
     }

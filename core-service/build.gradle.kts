@@ -31,9 +31,9 @@ dependencies {
     implementation("jakarta.annotation:jakarta.annotation-api")
 
     implementation("org.springframework.boot:spring-boot-starter-security")
-    implementation("org.springframework.security:spring-security-config:6.3.3")
-    implementation("org.springframework.security:spring-security-web:6.3.3")
-    implementation("org.springframework.security:spring-security-crypto:6.3.3")
+    implementation("org.springframework.security:spring-security-config")
+    implementation("org.springframework.security:spring-security-web")
+    implementation("org.springframework.security:spring-security-crypto")
     implementation("io.confluent:kafka-avro-serializer:7.6.0")
     implementation("io.jsonwebtoken:jjwt-api:0.12.6")
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.6")
