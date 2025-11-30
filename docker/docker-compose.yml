@@ -78,6 +78,31 @@ services:
     networks:
       - dev-net
 
+  redis:
+    image: redis:8.4.0-alpine
+    container_name: dabwish-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --save 60 1 --loglevel warning
+    networks:
+      - dev-net
+    restart: unless-stopped
+
+  redis-commander:
+    container_name: dabwish-redis-commander
+    hostname: redis-commander
+    image: rediscommander/redis-commander:latest
+    restart: always
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    ports:
+      - "8082:8081"
+    networks:
+      - dev-net
+
 volumes:
   pgdata:
   kafka_1_data:
+  redis_data:
