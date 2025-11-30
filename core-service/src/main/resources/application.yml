@@ -13,6 +13,13 @@ spring:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: none
+  cache:
+    type: redis
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      timeout: 5000
   profiles:
     active: ${SPRING_ACTIVE_PROFILE:dev}
   kafka:
@@ -45,3 +52,8 @@ app:
   jwt:
     secret: ${APP_JWT_SECRET:Xtd5Fk7WIZS4tpwRMaqqTlaJBVkRpr3U}
     expiration-seconds: ${APP_JWT_EXPIRATION:3600}
+  cache:
+    ttl:
+      users-seconds: ${APP_CACHE_USERS_TTL:900}
+      wishes-seconds: ${APP_CACHE_WISHES_TTL:600}
+      wish-list-seconds: ${APP_CACHE_WISH_LIST_TTL:120}

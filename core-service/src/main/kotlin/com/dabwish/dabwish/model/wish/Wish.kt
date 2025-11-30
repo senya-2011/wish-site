@@ -13,6 +13,7 @@ import jakarta.persistence.Table
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.UpdateTimestamp
 import org.hibernate.proxy.HibernateProxy
+import java.io.Serializable
 import java.math.BigDecimal
 import java.time.OffsetDateTime
 
@@ -47,7 +48,7 @@ data class Wish(
     @UpdateTimestamp
     @Column(name = "updated_at")
     var updatedAt: OffsetDateTime? = null,
-) {
+): Serializable {
     final override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other == null) return false
