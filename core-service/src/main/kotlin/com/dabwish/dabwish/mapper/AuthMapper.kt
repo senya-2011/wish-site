@@ -18,7 +18,7 @@ abstract class AuthMapper {
     protected lateinit var userMapper: UserMapper
 
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "hashPassword", ignore = true)
+    @Mapping(target = "hashPassword", constant = "")
     @Mapping(target = "role", constant = "MEMBER")
     @Mapping(target = "createdAt", expression = "java(java.time.OffsetDateTime.now())")
     @Mapping(target = "updatedAt", ignore = true)
