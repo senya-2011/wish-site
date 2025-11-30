@@ -7,12 +7,9 @@ const apiConfig = new Configuration();
 const axiosInstance = axios.create({
   baseURL: basePath,
 });
-
-let authToken: string | null = null;
 let unauthorizedHandler: (() => void) | null = null;
 
 export const setAuthToken = (token: string | null) => {
-  authToken = token;
   if (token) {
     axiosInstance.defaults.headers.common.Authorization = `Bearer ${token}`;
   } else {

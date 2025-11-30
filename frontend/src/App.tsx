@@ -10,7 +10,7 @@ import { GetWishById } from "./components/GetWishById";
 import { UpdateWishForm } from "./components/UpdateWishForm";
 import { DeleteWishForm } from "./components/DeleteWishForm";
 import { AuthPage } from "./components/AuthPage";
-import { useAuth } from "./context/AuthContext";
+import { useAuth } from "./context/useAuth";
 import {
   Box,
   Button,

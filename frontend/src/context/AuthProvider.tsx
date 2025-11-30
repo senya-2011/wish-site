@@ -1,20 +1,11 @@
-import { createContext, useContext, useEffect, useLayoutEffect, useState, useCallback } from "react";
+import { useCallback, useEffect, useLayoutEffect, useState } from "react";
 import type { ReactNode } from "react";
 import type { LoginRequest, RegisterRequest, LoginResponse, UserResponse } from "../api";
 import { authApi, setAuthToken, setUnauthorizedHandler } from "../lib/api-client";
-
-type AuthContextValue = {
-  token: string | null;
-  user: UserResponse | null;
-  login: (payload: LoginRequest) => Promise<void>;
-  register: (payload: RegisterRequest) => Promise<void>;
-  logout: () => void;
-};
+import { AuthContext } from "./AuthContext";
 
 const TOKEN_STORAGE_KEY = "dabwish.accessToken";
 const USER_STORAGE_KEY = "dabwish.user";
-
-const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 const decodeBase64Url = (value: string): string => {
   const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
@@ -38,12 +29,35 @@ const isTokenExpired = (token: string): boolean => {
   }
 };
 
+const readInitialToken = (): string | null => {
+  const stored = localStorage.getItem(TOKEN_STORAGE_KEY);
+  if (!stored) {
+    return null;
+  }
+  if (isTokenExpired(stored)) {
+    localStorage.removeItem(TOKEN_STORAGE_KEY);
+    localStorage.removeItem(USER_STORAGE_KEY);
+    return null;
+  }
+  return stored;
+};
+
+const readInitialUser = (): UserResponse | null => {
+  const raw = localStorage.getItem(USER_STORAGE_KEY);
+  if (!raw) {
+    return null;
+  }
+  try {
+    return JSON.parse(raw) as UserResponse;
+  } catch {
+    localStorage.removeItem(USER_STORAGE_KEY);
+    return null;
+  }
+};
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [token, setToken] = useState<string | null>(() => localStorage.getItem(TOKEN_STORAGE_KEY));
-  const [user, setUser] = useState<UserResponse | null>(() => {
-    const raw = localStorage.getItem(USER_STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as UserResponse) : null;
-  });
+  const [token, setToken] = useState<string | null>(readInitialToken);
+  const [user, setUser] = useState<UserResponse | null>(readInitialUser);
 
   useEffect(() => {
     setAuthToken(token);
@@ -93,24 +107,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => setUnauthorizedHandler(null);
   }, [logout]);
 
-  useLayoutEffect(() => {
-    if (token && isTokenExpired(token)) {
-      logout();
-    }
-  }, [token, logout]);
-
   return (
     <AuthContext.Provider value={{ token, user, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );
-};
-
-export const useAuth = (): AuthContextValue => {
-  const ctx = useContext(AuthContext);
-  if (!ctx) {
-    throw new Error("useAuth must be used within AuthProvider");
-  }
-  return ctx;
 };
 
