@@ -4,6 +4,7 @@ import com.dabwish.dabwish.generated.api.UsersApi
 import com.dabwish.dabwish.generated.dto.UserRequest
 import com.dabwish.dabwish.generated.dto.UserResponse
 import com.dabwish.dabwish.generated.dto.UserUpdateRequest
+import com.dabwish.dabwish.generated.dto.WishPageResponse
 import com.dabwish.dabwish.generated.dto.WishRequest
 import com.dabwish.dabwish.generated.dto.WishResponse
 import com.dabwish.dabwish.mapper.UserMapper
@@ -12,6 +13,8 @@ import com.dabwish.dabwish.service.UserService
 import com.dabwish.dabwish.service.WishService
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Sort
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
@@ -71,9 +74,18 @@ class UserController(
         return ResponseEntity.ok(wishResponse)
     }
 
-    override fun getUserWishes(userId: Long): ResponseEntity<List<WishResponse>> {
-        val wishes = wishService.findAllByUserId(userId)
-        val wishesResponse = wishMapper.toResponseList(wishes)
-        return ResponseEntity.ok(wishesResponse)
+    override fun getUserWishes(userId: Long, page: Int, size: Int): ResponseEntity<WishPageResponse> {
+        val pageNumber = page.coerceAtLeast(0)
+        val pageSize = size.coerceIn(1, 50)
+        val pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, "createdAt"))
+        val wishesPage = wishService.findAllByUserId(userId, pageable)
+        val dto = WishPageResponse(
+            items = wishMapper.toResponseList(wishesPage.content),
+            page = wishesPage.number,
+            propertySize = wishesPage.size,
+            totalElements = wishesPage.totalElements,
+            totalPages = wishesPage.totalPages,
+        )
+        return ResponseEntity.ok(dto)
     }
 }
