@@ -1,7 +1,23 @@
 import { useState } from "react";
+import type { ChangeEvent } from "react";
 import { isAxiosError } from "axios";
 import { useAuth } from "../context/AuthContext";
 import type { LoginRequest, RegisterRequest } from "../api";
+import {
+  Box,
+  Button,
+  Card,
+  CardBody,
+  CardHeader,
+  Flex,
+  FormControl,
+  FormLabel,
+  Heading,
+  Input,
+  Link,
+  Stack,
+  Text,
+} from "@chakra-ui/react";
 
 type Mode = "login" | "register";
 
@@ -50,52 +66,78 @@ export const AuthPage = () => {
   };
 
   return (
-    <div className="card auth-card">
-      <h2>{mode === "login" ? "Вход в систему" : "Регистрация"}</h2>
-      <p className="text-muted">
-        {mode === "login"
-          ? "Введите имя пользователя и пароль"
-          : "Создайте новый аккаунт, чтобы продолжить"}
-      </p>
-
-      <form className="form" onSubmit={handleSubmit}>
-        <input
-          className="form-input"
-          placeholder="Имя пользователя"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
-        />
-        <input
-          className="form-input"
-          type="password"
-          placeholder="Пароль"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          minLength={6}
-        />
-        {error && <p className="error">{error}</p>}
-        <button className="button" type="submit" disabled={isSubmitting}>
-          {isSubmitting
-            ? "Отправляем..."
-            : mode === "login"
-              ? "Войти"
-              : "Зарегистрироваться"}
-        </button>
-      </form>
-
-      <div className="auth-toggle">
-        <span>
-          {mode === "login"
-            ? "Нет аккаунта?"
-            : "Уже зарегистрированы?"}
-        </span>
-        <button className="link-button" onClick={toggleMode}>
-          {mode === "login" ? "Перейти к регистрации" : "Перейти ко входу"}
-        </button>
-      </div>
-    </div>
+    <Flex minH="100vh" align="center" justify="center" px={4}>
+      <Card w="100%" maxW="420px" shadow="xl" borderRadius="2xl">
+        <CardHeader textAlign="center">
+          <Stack spacing={2}>
+            <Heading size="lg">
+              {mode === "login" ? "Вход в систему" : "Регистрация"}
+            </Heading>
+            <Text color="gray.500">
+              {mode === "login"
+                ? "Введите имя пользователя и пароль"
+                : "Создайте новый аккаунт, чтобы продолжить"}
+            </Text>
+          </Stack>
+        </CardHeader>
+        <CardBody>
+          <form onSubmit={handleSubmit}>
+            <Stack spacing={4}>
+              <FormControl isRequired>
+                <FormLabel>Имя пользователя</FormLabel>
+                <Input
+                  value={name}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                    setName(e.target.value)
+                  }
+                  placeholder="Введите имя"
+                />
+              </FormControl>
+              <FormControl isRequired>
+                <FormLabel>Пароль</FormLabel>
+                <Input
+                  type="password"
+                  value={password}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                    setPassword(e.target.value)
+                  }
+                  placeholder="Минимум 6 символов"
+                  minLength={6}
+                />
+              </FormControl>
+              {error && (
+                <Box
+                  color="red.500"
+                  bg="red.50"
+                  borderRadius="md"
+                  p={2}
+                  fontSize="sm"
+                >
+                  {error}
+                </Box>
+              )}
+              <Button
+                colorScheme="purple"
+                type="submit"
+                isLoading={isSubmitting}
+              >
+                {mode === "login" ? "Войти" : "Зарегистрироваться"}
+              </Button>
+            </Stack>
+          </form>
+          <Flex mt={4} align="center" justify="center" gap={2} fontSize="sm">
+            <Text color="gray.600">
+              {mode === "login"
+                ? "Нет аккаунта?"
+                : "Уже зарегистрированы?"}
+            </Text>
+            <Link color="purple.600" fontWeight="semibold" onClick={toggleMode}>
+              {mode === "login" ? "Создать" : "Войти"}
+            </Link>
+          </Flex>
+        </CardBody>
+      </Card>
+    </Flex>
   );
 };
 
