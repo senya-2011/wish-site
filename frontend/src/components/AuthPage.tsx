@@ -26,12 +26,17 @@ export const AuthPage = () => {
   const [mode, setMode] = useState<Mode>("login");
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
+  const [passwordConfirm, setPasswordConfirm] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError(null);
+    if (mode === "register" && password !== passwordConfirm) {
+      setError("Пароли не совпадают");
+      return;
+    }
     setIsSubmitting(true);
     try {
       if (mode === "login") {
@@ -105,6 +110,20 @@ export const AuthPage = () => {
                   minLength={6}
                 />
               </FormControl>
+              {mode === "register" && (
+                <FormControl isRequired>
+                  <FormLabel>Повторите пароль</FormLabel>
+                  <Input
+                    type="password"
+                    value={passwordConfirm}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                      setPasswordConfirm(e.target.value)
+                    }
+                    placeholder="Повторите пароль"
+                    minLength={6}
+                  />
+                </FormControl>
+              )}
               {error && (
                 <Box
                   color="red.500"
