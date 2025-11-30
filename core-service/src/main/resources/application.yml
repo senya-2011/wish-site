@@ -15,11 +15,19 @@ spring:
       ddl-auto: none
   cache:
     type: redis
+    # type: none #for Hikari
   data:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
       timeout: 5000
+      lettuce:
+        pool:
+          enabled: true
+          max-active: 32
+          max-idle: 16
+          min-idle: 4
+          max-wait: 100ms
   profiles:
     active: ${SPRING_ACTIVE_PROFILE:dev}
   kafka:
