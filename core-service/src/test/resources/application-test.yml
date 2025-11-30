@@ -20,6 +20,9 @@ spring:
 app:
   kafka:
     enabled: false
+  jwt:
+    secret: Xtd5Fk7WIZS4tpwRMaqqTlaJBVkRpr3U
+    expiration-seconds: 3600
 
 server:
   port: 0

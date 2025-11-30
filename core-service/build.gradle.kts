@@ -6,6 +6,7 @@ plugins {
 
     id("org.springframework.boot")
     id("io.spring.dependency-management")
+    id("checkstyle")
 }
 
 dependencies {
@@ -29,8 +30,14 @@ dependencies {
     implementation("jakarta.validation:jakarta.validation-api")
     implementation("jakarta.annotation:jakarta.annotation-api")
 
-    implementation("org.springframework.security:spring-security-crypto:6.3.3")
+    implementation("org.springframework.boot:spring-boot-starter-security")
+    implementation("org.springframework.security:spring-security-config")
+    implementation("org.springframework.security:spring-security-web")
+    implementation("org.springframework.security:spring-security-crypto")
     implementation("io.confluent:kafka-avro-serializer:7.6.0")
+    implementation("io.jsonwebtoken:jjwt-api:0.12.6")
+    runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.6")
+    runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.6")
 
     developmentOnly("org.springframework.boot:spring-boot-devtools")
 
@@ -47,6 +54,17 @@ kapt {
     arguments {
         arg("mapstruct.defaultComponentModel", "spring")
     }
+}
+
+checkstyle {
+    toolVersion = "10.15.0"
+    configDirectory.set(layout.projectDirectory.dir("config/checkstyle"))
+    maxWarnings = 0
+    isIgnoreFailures = false
+}
+
+tasks.named("check") {
+    dependsOn("checkstyleMain", "checkstyleTest")
 }
 
 tasks.withType<Test> {

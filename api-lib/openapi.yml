@@ -10,6 +10,8 @@ tags:
     description: Управление пользователями
   - name: Wishes
     description: Управление желаниями
+  - name: Auth
+    description: Авторизация и получение токенов
 
 paths:
   # --- USERS ---
@@ -19,6 +21,8 @@ paths:
       tags:
         - Users
       operationId: getAllUsers
+      security:
+        - bearerAuth: []
       responses:
         '200':
           description: Успешный ответ со списком всех юзеров
@@ -40,6 +44,8 @@ paths:
       tags:
         - Users
       operationId: createUser
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -70,6 +76,8 @@ paths:
           type: integer
           format: int64
     get:
+      security:
+        - bearerAuth: []
       summary: Метод получения конкретного user по id
       tags:
         - Users
@@ -89,6 +97,8 @@ paths:
                 $ref: "#/components/schemas/Error"
 
     delete:
+      security:
+        - bearerAuth: []
       summary: Метод удаления юзера по id
       tags:
         - Users
@@ -104,6 +114,8 @@ paths:
                 $ref: "#/components/schemas/Error"
 
     patch:
+      security:
+        - bearerAuth: []
       summary: Обновление данных юзера по id
       tags:
         - Users
@@ -138,21 +150,41 @@ paths:
           format: int64
 
     get:
+      security:
+        - bearerAuth: []
       summary: Получить все желания конкретного пользователя
       tags:
         - Wishes
       operationId: getUserWishes
+      parameters:
+        - name: page
+          in: query
+          required: false
+          description: Номер страницы (0-based)
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: size
+          in: query
+          required: false
+          description: Количество элементов на странице
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
       responses:
         '200':
-          description: Список желаний пользователя
+          description: Пагинированный список желаний пользователя
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/WishResponse"
+                $ref: "#/components/schemas/WishPageResponse"
 
     post:
+      security:
+        - bearerAuth: []
       summary: Создать новое желание для пользователя
       tags:
         - Wishes
@@ -182,6 +214,8 @@ paths:
           format: int64
 
     get:
+      security:
+        - bearerAuth: []
       summary: Получить детали конкретного желания
       tags:
         - Wishes
@@ -201,6 +235,8 @@ paths:
                 $ref: "#/components/schemas/Error"
 
     delete:
+      security:
+        - bearerAuth: []
       summary: Удалить желание
       tags:
         - Wishes
@@ -212,6 +248,8 @@ paths:
           description: Желание не найдено
 
     patch:
+      security:
+        - bearerAuth: []
       summary: Обновить желание
       tags:
         - Wishes
@@ -229,6 +267,69 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/WishResponse"
+
+  # --- AUTH ---
+  /auth/login:
+    post:
+      security: []
+      summary: Авторизация пользователя
+      description: Принимает логин и пароль и возвращает access_token
+      tags:
+        - Auth
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        '200':
+          description: Авторизация прошла успешно
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        '401':
+          description: Неверный логин или пароль
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '429':
+          description: Слишком много попыток входа
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /auth/register:
+    post:
+      security: []
+      summary: Регистрация нового пользователя
+      description: Создает нового пользователя и возвращает access_token
+      tags:
+        - Auth
+      operationId: register
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        '200':
+          description: Регистрация прошла успешно
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        '400':
+          description: Ошибка валидации или пользователь уже существует
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 
 components:
   schemas:
@@ -332,6 +433,36 @@ components:
           format: date-time
           example: "2025-12-01T10:00:00+03:00"
 
+    WishPageResponse:
+      type: object
+      required:
+        - items
+        - page
+        - size
+        - total_elements
+        - total_pages
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/WishResponse"
+        page:
+          type: integer
+          format: int32
+          description: Текущий номер страницы (0-based)
+        size:
+          type: integer
+          format: int32
+          description: Размер страницы
+        total_elements:
+          type: integer
+          format: int64
+          description: Общее количество желаний
+        total_pages:
+          type: integer
+          format: int32
+          description: Общее количество страниц
+
     WishRequest:
       type: object
       required:
@@ -363,6 +494,64 @@ components:
           type: number
           format: double
 
+    # --- AUTH MODELS ---
+    LoginRequest:
+      type: object
+      required:
+        - name
+        - password
+      properties:
+        name:
+          type: string
+          description: Логин пользователя
+          example: admin
+        password:
+          type: string
+          format: password
+          description: Пароль пользователя
+          example: qwerty123
+
+    LoginResponse:
+      type: object
+      required:
+        - access_token
+        - token_type
+        - expires_in
+      properties:
+        access_token:
+          type: string
+          description: JWT access token
+          example: fjdkfKFSKLFDjfdkfjkd...
+        token_type:
+          type: string
+          description: Тип токена
+          example: Bearer
+          default: Bearer
+        expires_in:
+          type: integer
+          format: int64
+          description: Время жизни access токена в секундах
+          example: 3600
+        user:
+          $ref: "#/components/schemas/UserResponse"
+
+    RegisterRequest:
+      type: object
+      required:
+        - name
+        - password
+      properties:
+        name:
+          type: string
+          description: Имя пользователя
+          example: new_user
+        password:
+          type: string
+          format: password
+          minLength: 6
+          description: Пароль пользователя
+          example: SuperSecret123
+
     # --- COMMON ---
     Error:
       type: object
@@ -376,3 +565,9 @@ components:
         message:
           type: string
           example: Resource not found
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

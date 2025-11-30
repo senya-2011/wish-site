@@ -1,0 +1,2 @@
+export { MyWishesPage } from "./wishes";
+

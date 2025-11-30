@@ -4,7 +4,6 @@ import com.dabwish.dabwish.generated.api.WishesApi
 import com.dabwish.dabwish.generated.dto.WishResponse
 import com.dabwish.dabwish.generated.dto.WishUpdateRequest
 import com.dabwish.dabwish.mapper.WishMapper
-import com.dabwish.dabwish.model.wish.Wish
 import com.dabwish.dabwish.service.WishService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.RestController
