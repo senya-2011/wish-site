@@ -10,9 +10,10 @@ import com.dabwish.dabwish.model.wish.Wish
 import com.dabwish.dabwish.repository.UserRepository
 import com.dabwish.dabwish.repository.WishRepository
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.transaction.annotation.Transactional
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
-
+import org.springframework.transaction.annotation.Transactional
 
 @Service
 class WishService(
@@ -21,16 +22,16 @@ class WishService(
     private val userRepository: UserRepository,
     @Autowired(required = false) private val wishEventPublisher: WishEventPublisher?,
 ) {
-    fun findAllByUserId(userId: Long): List<Wish> {
+    fun findAllByUserId(userId: Long, pageable: Pageable): Page<Wish> {
         if (!userRepository.existsById(userId)) {
             throw UserNotFoundException(userId)
         }
-        return wishRepository.findAllByUserId(userId)
+        return wishRepository.findAllByUserId(userId, pageable)
     }
 
     fun findById(id: Long): Wish {
-        return wishRepository.findById(id).
-            orElseThrow{WishNotFoundException(id)}
+        return wishRepository.findById(id)
+            .orElseThrow { WishNotFoundException(id) }
     }
 
     @Transactional
@@ -38,13 +39,13 @@ class WishService(
         val user = userRepository.findById(userId)
             .orElseThrow { UserNotFoundException(userId) }
         val wish = wishMapper.toEntity(request, user)
-        val saved  = wishRepository.save(wish)
+        val saved = wishRepository.save(wish)
         wishEventPublisher?.publishWishCreated(saved)
         return saved
     }
 
     @Transactional
-    fun delete(id: Long){
+    fun delete(id: Long) {
         if (!wishRepository.existsById(id)) throw WishNotFoundException(id)
         wishRepository.deleteById(id)
     }

@@ -24,6 +24,8 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.context.annotation.ComponentScan
 import org.springframework.context.annotation.FilterType
 import org.springframework.http.MediaType
+import org.springframework.data.domain.PageImpl
+import org.springframework.data.domain.PageRequest
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.delete
 import org.springframework.test.web.servlet.get
@@ -172,24 +174,31 @@ class UserControllerTest(
     // --- WISHES ---
     // GET user wishes
     @Test
-    fun `getUserWishes by user id and return 200 + list of wishes`(){
-        val wishes = listOf(Wish(id = 1, title = "PS5", user=user), Wish(id = 2, title = "PS5Pro", user=user))
-        val wishesResponse = listOf(WishResponse(wishId = 1, ownerId = 1, title = "PS5", createdAt = OffsetDateTime.now()),
-            WishResponse(wishId = 2, ownerId = 1, title = "PS5Pro", createdAt = OffsetDateTime.now()))
+    fun `getUserWishes by user id returns paged payload`() {
+        val wishes = listOf(
+            Wish(id = 1, title = "PS5", user = user),
+            Wish(id = 2, title = "PS5Pro", user = user),
+        )
+        val wishesResponse = listOf(
+            WishResponse(wishId = 1, ownerId = 1, title = "PS5", createdAt = OffsetDateTime.now()),
+            WishResponse(wishId = 2, ownerId = 1, title = "PS5Pro", createdAt = OffsetDateTime.now()),
+        )
+        val pageable = PageRequest.of(0, 10)
+        every { wishService.findAllByUserId(eq(user.id), any()) } returns PageImpl(wishes, pageable, wishes.size.toLong())
+        every { wishMapper.toResponseList(wishes) } returns wishesResponse
 
-        every { wishService.findAllByUserId(user.id)} returns wishes
-        every { wishMapper.toResponseList(wishes)} returns wishesResponse
-
-        mockMvc.get("/api/users/${user.id}/wishes") {
+        mockMvc.get("/api/users/${user.id}/wishes?page=0&size=10") {
             contentType = MediaType.APPLICATION_JSON
         }.andExpect {
             status { isOk() }
             content { contentType(MediaType.APPLICATION_JSON) }
-            jsonPath("$[0].title") {value(wishesResponse.first().title)}
-            jsonPath("$[1].title") {value(wishesResponse[1].title)}
+            jsonPath("$.items[0].title") { value(wishesResponse.first().title) }
+            jsonPath("$.items[1].title") { value(wishesResponse[1].title) }
+            jsonPath("$.page") { value(0) }
+            jsonPath("$.total_pages") { value(1) }
         }
 
-        verify(exactly = 1) { wishService.findAllByUserId(user.id) }
+        verify(exactly = 1) { wishService.findAllByUserId(eq(user.id), any()) }
     }
 
     // POST create new wish

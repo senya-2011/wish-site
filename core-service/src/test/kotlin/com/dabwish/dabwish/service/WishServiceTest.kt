@@ -19,6 +19,8 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import org.springframework.data.domain.PageImpl
+import org.springframework.data.domain.PageRequest
 import java.util.*
 
 class WishServiceTest {
@@ -41,16 +43,17 @@ class WishServiceTest {
     }
 
     @Test
-    fun `findAllByUserId returns wishes`() {
+    fun `findAllByUserId returns page of wishes`() {
         val wish = mockk<Wish>()
+        val pageable = PageRequest.of(0, 10)
         every { userRepository.existsById(1L) } returns true
-        every { wishRepository.findAllByUserId(1L) } returns listOf(wish)
+        every { wishRepository.findAllByUserId(1L, pageable) } returns PageImpl(listOf(wish), pageable, 1)
 
-        val result = service.findAllByUserId(1L)
+        val result = service.findAllByUserId(1L, pageable)
 
-        assertEquals(1, result.size)
+        assertEquals(1, result.totalElements)
         verify(exactly = 1) { userRepository.existsById(1L) }
-        verify(exactly = 1) { wishRepository.findAllByUserId(1L) }
+        verify(exactly = 1) { wishRepository.findAllByUserId(1L, pageable) }
     }
 
     @Test
@@ -58,11 +61,11 @@ class WishServiceTest {
         every { userRepository.existsById(1L) } returns false
 
         assertThrows<UserNotFoundException> { 
-            service.findAllByUserId(1L) 
+            service.findAllByUserId(1L, PageRequest.of(0, 10)) 
         }
 
         verify(exactly = 1) { userRepository.existsById(1L) }
-        verify(exactly = 0) { wishRepository.findAllByUserId(any()) }
+        verify(exactly = 0) { wishRepository.findAllByUserId(any(), any()) }
     }
 
     @Test
