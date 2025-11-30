@@ -11,6 +11,7 @@ import com.dabwish.dabwish.mapper.WishMapper
 import com.dabwish.dabwish.service.UserService
 import com.dabwish.dabwish.service.WishService
 import org.springframework.http.ResponseEntity
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
@@ -35,6 +36,7 @@ class UserController(
     }
 
     // POST
+    @PreAuthorize("hasRole('ADMIN')")
     override fun createUser(userRequest: UserRequest): ResponseEntity<UserResponse> {
         val user = userService.create(userRequest)
         val userResponse = userMapper.userToUserResponse(user)
@@ -42,12 +44,14 @@ class UserController(
     }
 
     // DELETE
+    @PreAuthorize("hasRole('ADMIN')")
     override fun deleteUserById(userId: Long): ResponseEntity<Unit> {
         userService.delete(userId)
         return ResponseEntity.ok().build()
     }
 
     // PATCH
+    @PreAuthorize("hasRole('ADMIN')")
     override fun updateUserById(
         userId: Long,
         userUpdateRequest: UserUpdateRequest
