@@ -9,13 +9,35 @@ import { CreateWishForm } from "./components/CreateWishForm";
 import { GetWishById } from "./components/GetWishById";
 import { UpdateWishForm } from "./components/UpdateWishForm";
 import { DeleteWishForm } from "./components/DeleteWishForm";
+import { AuthPage } from "./components/AuthPage";
+import { useAuth } from "./context/AuthContext";
 
 function App() {
+  const { token, user, logout } = useAuth();
+
+  if (!token) {
+    return (
+      <main className="app-shell">
+        <AuthPage />
+      </main>
+    );
+  }
+
   return (
     <main className="app-shell">
       <header className="page-header">
-        <h1>Wish site</h1>
-        <p>Площадка для теста всех OpenAPI ручек core-service.</p>
+        <div>
+          <h1>Wish site playground</h1>
+          <p className="text-muted">
+            Управляй пользователями и их желаниями прямо из браузера
+          </p>
+        </div>
+        <div className="auth-meta">
+          <span>Вошли как {user?.name ?? "неизвестно"}</span>
+          <button className="button neutral" onClick={logout}>
+            Выйти
+          </button>
+        </div>
       </header>
 
       <section className="section">

@@ -188,3 +188,35 @@ body {
   color: #ef4444;
   font-size: 0.95rem;
 }
+
+.auth-card {
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+.auth-toggle {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.link-button {
+  border: none;
+  background: none;
+  color: #4338ca;
+  cursor: pointer;
+  font-weight: 600;
+  padding: 0;
+}
+
+.link-button:hover {
+  text-decoration: underline;
+}
+
+.auth-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #475569;
+}
