@@ -34,6 +34,7 @@ class SecurityConfig(
         jwtAuthenticationFilter: JwtAuthenticationFilter,
     ): SecurityFilterChain {
         http
+            .cors { }
             .csrf { it.disable() }
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .authorizeHttpRequests {
