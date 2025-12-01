@@ -67,3 +67,16 @@ app:
       users-seconds: ${APP_CACHE_USERS_TTL:900}
       wishes-seconds: ${APP_CACHE_WISHES_TTL:600}
       wish-list-seconds: ${APP_CACHE_WISH_LIST_TTL:120}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "metrics,prometheus"
+  metrics:
+    cache:
+      instrument: true
+    tags:
+      application: dabwish
+    enable:
+      cache: true

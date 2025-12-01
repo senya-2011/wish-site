@@ -24,7 +24,9 @@ class CacheConfig(
 ) {
 
     @Bean
-    fun redisCacheManager(connectionFactory: RedisConnectionFactory): RedisCacheManager {
+    fun redisCacheManager(
+        connectionFactory: RedisConnectionFactory,
+    ): RedisCacheManager {
         val polymorphicTypeValidator = BasicPolymorphicTypeValidator.builder()
             .allowIfBaseType(Any::class.java)
             .build()
@@ -50,6 +52,9 @@ class CacheConfig(
                     "userWishes" to defaultConfig,
                 ),
             )
+            // Enable statistics collection so that Spring Boot Actuator can expose
+            // cache_* metrics (cache_gets_total, cache_puts_total, etc.)
+            .enableStatistics()
             .build()
     }
 }
