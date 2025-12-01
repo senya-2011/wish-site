@@ -12,6 +12,8 @@ tags:
     description: Управление желаниями
   - name: Auth
     description: Авторизация и получение токенов
+  - name: Files
+    description: Управление файлами (загрузка, удаление)
 
 paths:
   # --- USERS ---
@@ -326,6 +328,88 @@ paths:
                 $ref: "#/components/schemas/LoginResponse"
         '400':
           description: Ошибка валидации или пользователь уже существует
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  # --- FILES ---
+  /files/upload:
+    post:
+      summary: Загрузить файл (фото) в MinIO
+      description: Загружает изображение в MinIO и возвращает URL для доступа к файлу. Максимальный размер - 10MB. Поддерживаются только изображения.
+      tags:
+        - Files
+      operationId: uploadFile
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Файл изображения (jpg, png, gif, webp)
+      responses:
+        '200':
+          description: Файл успешно загружен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileUploadResponse"
+        '400':
+          description: Ошибка валидации (файл не предоставлен, неверный формат или слишком большой)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '401':
+          description: Не авторизован
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '500':
+          description: Ошибка при загрузке файла в MinIO
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /files/{object_name}:
+    delete:
+      summary: Удалить файл из MinIO
+      description: Удаляет файл из MinIO по его object name (например, wishes/uuid.jpg)
+      tags:
+        - Files
+      operationId: deleteFile
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: object_name
+          in: path
+          required: true
+          description: Object name файла в MinIO (например, wishes/550e8400-e29b-41d4-a716-446655440000.jpg)
+          schema:
+            type: string
+          example: "wishes/550e8400-e29b-41d4-a716-446655440000.jpg"
+      responses:
+        '200':
+          description: Файл успешно удален
+        '400':
+          description: Некорректный object name
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '401':
+          description: Не авторизован
           content:
             application/json:
               schema:
