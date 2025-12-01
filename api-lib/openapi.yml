@@ -552,6 +552,21 @@ components:
           description: Пароль пользователя
           example: SuperSecret123
 
+    FileUploadResponse:
+      type: object
+      required:
+        - file_url
+        - object_name
+      properties:
+        file_url:
+          type: string
+          description: Полный URL для доступа к загруженному файлу
+          example: "http://localhost:9000/dabwish-images/wishes/550e8400-e29b-41d4-a716-446655440000.jpg"
+        object_name:
+          type: string
+          description: Имя объекта в MinIO bucket (можно использовать для удаления)
+          example: "wishes/550e8400-e29b-41d4-a716-446655440000.jpg"
+
     # --- COMMON ---
     Error:
       type: object

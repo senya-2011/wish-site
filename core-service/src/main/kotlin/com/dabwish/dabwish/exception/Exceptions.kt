@@ -16,3 +16,6 @@ class MissingCreatedAtException(userId: Long) :
 
 // Wishes
 class WishNotFoundException(id: Long) : AppException("Wish with id:$id not found")
+
+// MinIO
+class FileStorageException(message: String, cause: Throwable? = null) : RuntimeException(message, cause)

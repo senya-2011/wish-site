@@ -25,6 +25,7 @@ class WishService(
     private val wishMapper: WishMapper,
     private val userRepository: UserRepository,
     @Autowired(required = false) private val wishEventPublisher: WishEventPublisher?,
+    private val minioService: MinioService,
 ) {
     @Cacheable(
         cacheNames = ["userWishes"],
@@ -65,7 +66,15 @@ class WishService(
         ],
     )
     fun delete(id: Long) {
-        if (!wishRepository.existsById(id)) throw WishNotFoundException(id)
+        val wish = wishRepository.findById(id).orElseThrow { WishNotFoundException(id) }
+        
+
+        wish.photoUrl?.let { url ->
+            minioService.extractObjectNameFromUrl(url)?.let { objectName ->
+                minioService.deleteFile(objectName)
+            }
+        }
+        
         wishRepository.deleteById(id)
     }
 
@@ -75,7 +84,16 @@ class WishService(
         evict = [CacheEvict(cacheNames = ["userWishes"], allEntries = true)],
     )
     fun update(id: Long, wishUpdateRequest: WishUpdateRequest): Wish {
-        val wish = wishRepository.findById(id).orElseThrow{WishNotFoundException(id)}
+        val wish = wishRepository.findById(id).orElseThrow { WishNotFoundException(id) }
+        
+        if (wishUpdateRequest.photoUrl != null && wishUpdateRequest.photoUrl != wish.photoUrl) {
+            wish.photoUrl?.let { oldUrl ->
+                minioService.extractObjectNameFromUrl(oldUrl)?.let { objectName ->
+                    minioService.deleteFile(objectName)
+                }
+            }
+        }
+        
         wishMapper.updateEntityFromRequest(wishUpdateRequest, wish)
         val saved = wishRepository.save(wish)
         wishEventPublisher?.publishWishUpdated(saved)

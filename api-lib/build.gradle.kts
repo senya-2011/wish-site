@@ -27,7 +27,9 @@ openApiGenerate {
             "interfaceOnly" to "true",
             "useBeanValidation" to "true",
             "useSpringBoot3" to "true",
-            "dateLibrary" to "java8"
+            "dateLibrary" to "java8",
+            "library" to "spring-boot",
+            "reactive" to "false"
         )
     )
 }
