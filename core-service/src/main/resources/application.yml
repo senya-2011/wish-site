@@ -61,6 +61,8 @@ app:
     secret: ${APP_JWT_SECRET:Xtd5Fk7WIZS4tpwRMaqqTlaJBVkRpr3U}
     expiration-seconds: ${APP_JWT_EXPIRATION:3600}
   cache:
+    logging:
+      enabled: ${APP_LOGGING:true}
     ttl:
       users-seconds: ${APP_CACHE_USERS_TTL:900}
       wishes-seconds: ${APP_CACHE_WISHES_TTL:600}
