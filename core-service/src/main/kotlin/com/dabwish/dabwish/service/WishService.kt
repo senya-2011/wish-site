@@ -75,7 +75,7 @@ class WishService(
         evict = [CacheEvict(cacheNames = ["userWishes"], allEntries = true)],
     )
     fun update(id: Long, wishUpdateRequest: WishUpdateRequest): Wish {
-        val wish = findById(id)
+        val wish = wishRepository.findById(id).orElseThrow{WishNotFoundException(id)}
         wishMapper.updateEntityFromRequest(wishUpdateRequest, wish)
         val saved = wishRepository.save(wish)
         wishEventPublisher?.publishWishUpdated(saved)
