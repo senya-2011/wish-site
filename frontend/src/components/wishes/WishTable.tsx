@@ -79,7 +79,6 @@ export const WishTable = ({
       <Table variant="simple">
         <Thead>
           <Tr>
-            <Th>ID</Th>
             <Th>Название</Th>
             <Th>Цена</Th>
             <Th>Создано</Th>
@@ -94,20 +93,29 @@ export const WishTable = ({
               onClick={() => onSelect(wish)}
             >
               <Td>
-                <Badge colorScheme="purple" fontSize="sm">
-                  #{wish.wish_id}
-                </Badge>
-              </Td>
-              <Td>
                 <Text fontWeight="semibold">{wish.title}</Text>
                 {wish.description && (
-                  <Text color="gray.500" noOfLines={2}>
+                  <Text color="gray.500" fontSize="sm" noOfLines={2}>
                     {wish.description}
                   </Text>
                 )}
               </Td>
-              <Td>{wish.price ? `${wish.price} ₽` : "—"}</Td>
-              <Td>{new Date(wish.created_at).toLocaleString()}</Td>
+              <Td whiteSpace="nowrap">{wish.price ? `${wish.price} ₽` : "—"}</Td>
+              <Td whiteSpace="nowrap">
+                <Text fontSize="sm">
+                  {new Date(wish.created_at).toLocaleDateString("ru-RU", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric"
+                  })}
+                </Text>
+                <Text fontSize="xs" color="gray.500">
+                  {new Date(wish.created_at).toLocaleTimeString("ru-RU", {
+                    hour: "2-digit",
+                    minute: "2-digit"
+                  })}
+                </Text>
+              </Td>
               <Td textAlign="right" verticalAlign="top" whiteSpace="nowrap">
                 <Button
                   size="sm"

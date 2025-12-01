@@ -17,6 +17,7 @@ import {
 } from "@chakra-ui/react";
 import type { ChangeEvent } from "react";
 import type { WishFormState } from "./types";
+import { PhotoUpload } from "./PhotoUpload";
 
 type EditWishModalProps = {
   isOpen: boolean;
@@ -59,13 +60,10 @@ export const EditWishModal = ({
               onChange={(event: ChangeEvent<HTMLTextAreaElement>) => onChange("description", event.target.value)}
             />
           </FormControl>
-          <FormControl>
-            <FormLabel>Ссылка на фото</FormLabel>
-            <Input
-              value={form.photoUrl}
-              onChange={(event: ChangeEvent<HTMLInputElement>) => onChange("photoUrl", event.target.value)}
-            />
-          </FormControl>
+          <PhotoUpload
+            currentPhotoUrl={form.photoUrl}
+            onPhotoUrlChange={(url) => onChange("photoUrl", url)}
+          />
           <FormControl>
             <FormLabel>Цена (₽)</FormLabel>
             <Input

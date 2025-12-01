@@ -48,22 +48,25 @@ export const GetUserWishes = () => {
         <p className="error">Ошибка при загрузке желаний</p>
       )}
 
-      {mutation.isSuccess && mutation.data.length === 0 && (
+      {mutation.isSuccess && mutation.data.items.length === 0 && (
         <p className="text-muted">У пользователя пока нет желаний</p>
       )}
 
-      {mutation.isSuccess && mutation.data.length > 0 && (
+      {mutation.isSuccess && mutation.data.items.length > 0 && (
         <ul className="simple-list">
-          {mutation.data.map((wish) => (
+          {mutation.data.items.map((wish) => (
             <li key={wish.wish_id}>
               <div>
                 <div className="item-title">{wish.title}</div>
                 <div className="text-muted">
-                  ID: {wish.wish_id} • Цена:{" "}
-                  {wish.price ? `${wish.price} ₽` : "—"}
+                  Цена: {wish.price ? `${wish.price} ₽` : "—"} • 
+                  Создано: {new Date(wish.created_at).toLocaleDateString("ru-RU", {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric"
+                  })}
                 </div>
               </div>
-              <span className="pill">owner: {wish.owner_id}</span>
             </li>
           ))}
         </ul>

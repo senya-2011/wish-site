@@ -63,7 +63,15 @@ export const WishDetailsModal = ({ wish, isOpen, onClose, onEdit }: WishDetailsM
                 {wish.title}
               </Heading>
               <Text color="gray.600" mb={4}>
-                Создано: {new Date(wish.created_at).toLocaleString()}
+                Создано: {new Date(wish.created_at).toLocaleDateString("ru-RU", {
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric"
+                })}{" "}
+                в {new Date(wish.created_at).toLocaleTimeString("ru-RU", {
+                  hour: "2-digit",
+                  minute: "2-digit"
+                })}
               </Text>
               <Stack spacing={3}>
                 <Box>
