@@ -53,7 +53,7 @@ class UserService(
     @Transactional
     @CachePut(cacheNames = ["usersById"], key = "#result.id")
     fun update(id: Long, userUpdateRequest: UserUpdateRequest): User {
-        val user = findById(id)
+        val user = userRepository.findById(id).orElseThrow { UserNotFoundException(id) }
         userMapper.updateUserFromRequest(userUpdateRequest, user)
         return userRepository.save(user)
     }
