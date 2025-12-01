@@ -3,3 +3,4 @@ dabwish:
 logging:
   level:
     root: INFO
+    org.springframework.cache: TRACE

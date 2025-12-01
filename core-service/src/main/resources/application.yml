@@ -13,6 +13,21 @@ spring:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: none
+  cache:
+    type: redis
+    # type: none #for Hikari
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      timeout: 5000
+      lettuce:
+        pool:
+          enabled: true
+          max-active: 32
+          max-idle: 16
+          min-idle: 4
+          max-wait: 100ms
   profiles:
     active: ${SPRING_ACTIVE_PROFILE:dev}
   kafka:
@@ -45,3 +60,23 @@ app:
   jwt:
     secret: ${APP_JWT_SECRET:Xtd5Fk7WIZS4tpwRMaqqTlaJBVkRpr3U}
     expiration-seconds: ${APP_JWT_EXPIRATION:3600}
+  cache:
+    logging:
+      enabled: ${APP_LOGGING:true}
+    ttl:
+      users-seconds: ${APP_CACHE_USERS_TTL:900}
+      wishes-seconds: ${APP_CACHE_WISHES_TTL:600}
+      wish-list-seconds: ${APP_CACHE_WISH_LIST_TTL:120}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "metrics,prometheus"
+  metrics:
+    cache:
+      instrument: true
+    tags:
+      application: dabwish
+    enable:
+      cache: true
