@@ -29,12 +29,14 @@ class WishServiceTest {
     private val wishMapper = mockk<WishMapper>(relaxUnitFun = true)
     private val userRepository = mockk<UserRepository>()
     private val eventPublisher = mockk<WishEventPublisher>(relaxed = true)
+    private val minioService = mockk<MinioService>()
 
     private val service = WishService(
         wishRepository,
         wishMapper,
         userRepository,
-        eventPublisher
+        eventPublisher,
+        minioService
     )
 
     @BeforeEach
@@ -111,31 +113,36 @@ class WishServiceTest {
 
     @Test
     fun `delete removes entity`() {
-        every { wishRepository.existsById(5L) } returns true
+        val wish = mockk<Wish>()
+        every { wish.photoUrl } returns "http://some-url/photo.jpg"
+        every { minioService.extractObjectNameFromUrl("http://some-url/photo.jpg") } returns "photo.jpg"
+        every { minioService.deleteFile("photo.jpg") } returns Unit
+        every { wishRepository.findById(5L) } returns Optional.of(wish)
         every { wishRepository.deleteById(5L) } just Runs
 
         service.delete(5L)
 
-        verify(exactly = 1) { wishRepository.existsById(5L) }
+        verify(exactly = 1) { wishRepository.findById(5L) }
         verify(exactly = 1) { wishRepository.deleteById(5L) }
+        verify(exactly = 1) { minioService.deleteFile("photo.jpg") }
     }
 
     @Test
     fun `delete throws if wish not found`() {
-        every { wishRepository.existsById(5L) } returns false
+        every { wishRepository.findById(5L) } returns Optional.empty()
 
-        assertThrows<WishNotFoundException> { 
-            service.delete(5L) 
+        assertThrows<WishNotFoundException> {
+            service.delete(5L)
         }
 
-        verify(exactly = 1) { wishRepository.existsById(5L) }
+        verify(exactly = 1) { wishRepository.findById(5L) }
         verify(exactly = 0) { wishRepository.deleteById(any()) }
     }
 
     @Test
     fun `update modifies wish and publishes event`() {
-        val request = mockk<WishUpdateRequest>()
-        val wish = mockk<Wish>()
+        val request = mockk<WishUpdateRequest>(relaxed = true)
+        val wish = mockk<Wish>(relaxed = true)
 
         every { wishRepository.findById(2L) } returns Optional.of(wish)
         every { wishRepository.save(wish) } returns wish
