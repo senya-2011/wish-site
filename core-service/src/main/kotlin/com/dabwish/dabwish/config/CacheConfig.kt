@@ -28,7 +28,7 @@ class CacheConfig(
         connectionFactory: RedisConnectionFactory,
     ): RedisCacheManager {
         val polymorphicTypeValidator = BasicPolymorphicTypeValidator.builder()
-            .allowIfBaseType(Any::class.java)
+            .allowIfSubType("com.dabwish.dabwish.model")
             .build()
         val redisObjectMapper = objectMapper.copy().apply {
             activateDefaultTyping(polymorphicTypeValidator, ObjectMapper.DefaultTyping.EVERYTHING, JsonTypeInfo.As.PROPERTY)
@@ -52,8 +52,6 @@ class CacheConfig(
                     "userWishes" to defaultConfig,
                 ),
             )
-            // Enable statistics collection so that Spring Boot Actuator can expose
-            // cache_* metrics (cache_gets_total, cache_puts_total, etc.)
             .enableStatistics()
             .build()
     }
