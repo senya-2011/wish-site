@@ -28,7 +28,7 @@ class CacheConfig(
         connectionFactory: RedisConnectionFactory,
     ): RedisCacheManager {
         val polymorphicTypeValidator = BasicPolymorphicTypeValidator.builder()
-            .allowIfSubType("com.dabwish.dabwish.model")
+            .allowIfBaseType(Any::class.java)
             .build()
         val redisObjectMapper = objectMapper.copy().apply {
             activateDefaultTyping(polymorphicTypeValidator, ObjectMapper.DefaultTyping.EVERYTHING, JsonTypeInfo.As.PROPERTY)
