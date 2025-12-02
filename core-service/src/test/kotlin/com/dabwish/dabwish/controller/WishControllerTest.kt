@@ -20,9 +20,11 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.context.annotation.ComponentScan
 import org.springframework.context.annotation.FilterType
 import org.springframework.http.MediaType
+import org.springframework.mock.web.MockMultipartFile
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.delete
 import org.springframework.test.web.servlet.get
+import org.springframework.test.web.servlet.multipart
 import org.springframework.test.web.servlet.patch
 import java.time.OffsetDateTime
 
@@ -135,5 +137,41 @@ class WishControllerTest(
         }
 
         verify { wishService.update(wish.id, wishUpdateRequest) }
+    }
+
+    @Test
+    fun `update wish with file returns 200`() {
+        val file = MockMultipartFile(
+            "photo",
+            "new_image.jpg",
+            MediaType.IMAGE_JPEG_VALUE,
+            "new content".toByteArray()
+        )
+
+        val updatedWish = wish.copy(title = "Updated Title")
+        val updatedResponse = wishResponse.copy(title = "Updated Title")
+
+        every { wishService.updateWithFile(eq(wish.id), any(), any()) } returns updatedWish
+        every { wishMapper.toResponse(updatedWish) } returns updatedResponse
+
+        mockMvc.multipart("/api/wishes/${wish.id}/with-file") {
+            file(file)
+            param("title", "Updated Title")
+            with { request ->
+                request.method = "PATCH"
+                request
+            }
+        }.andExpect {
+            status { isOk() }
+            jsonPath("$.title") { value(updatedResponse.title) }
+        }
+
+        verify(exactly = 1) {
+            wishService.updateWithFile(
+                eq(wish.id),
+                match { it.title == "Updated Title" },
+                any()
+            )
+        }
     }
 }
