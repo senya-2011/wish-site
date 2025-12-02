@@ -12,4 +12,5 @@ interface WishRepository : JpaRepository<Wish, Long> {
     fun findByUser(user: User): List<Wish>
     fun findAllByUserId(userId: Long): List<Wish>
     fun findAllByUserId(userId: Long, pageable: Pageable): Page<Wish>
+    fun countByPhotoUrl(photoUrl: String): Long
 }

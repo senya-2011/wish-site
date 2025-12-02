@@ -67,11 +67,14 @@ class WishService(
     )
     fun delete(id: Long) {
         val wish = wishRepository.findById(id).orElseThrow { WishNotFoundException(id) }
-        
 
         wish.photoUrl?.let { url ->
-            minioService.extractObjectNameFromUrl(url)?.let { objectName ->
-                minioService.deleteFile(objectName)
+            val count = wishRepository.countByPhotoUrl(url)
+
+            if (count <= 1) {
+                minioService.extractObjectNameFromUrl(url)?.let { objectName ->
+                    minioService.deleteFile(objectName)
+                }
             }
         }
         
@@ -85,15 +88,21 @@ class WishService(
     )
     fun update(id: Long, wishUpdateRequest: WishUpdateRequest): Wish {
         val wish = wishRepository.findById(id).orElseThrow { WishNotFoundException(id) }
-        
-        if (wishUpdateRequest.photoUrl != null && wishUpdateRequest.photoUrl != wish.photoUrl) {
-            wish.photoUrl?.let { oldUrl ->
-                minioService.extractObjectNameFromUrl(oldUrl)?.let { objectName ->
-                    minioService.deleteFile(objectName)
+
+        wish.photoUrl?.let { url ->
+            val count = wishRepository.countByPhotoUrl(url)
+
+            if (count <= 1) {
+                if (wishUpdateRequest.photoUrl != null && wishUpdateRequest.photoUrl != wish.photoUrl) {
+                    wish.photoUrl?.let { oldUrl ->
+                        minioService.extractObjectNameFromUrl(oldUrl)?.let { objectName ->
+                            minioService.deleteFile(objectName)
+                        }
+                    }
                 }
             }
         }
-        
+
         wishMapper.updateEntityFromRequest(wishUpdateRequest, wish)
         val saved = wishRepository.save(wish)
         wishEventPublisher?.publishWishUpdated(saved)
