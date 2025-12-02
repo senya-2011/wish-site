@@ -5,8 +5,10 @@ import com.dabwish.dabwish.generated.dto.WishResponse
 import com.dabwish.dabwish.generated.dto.WishUpdateRequest
 import com.dabwish.dabwish.mapper.WishMapper
 import com.dabwish.dabwish.service.WishService
+import com.dabwish.dabwish.util.FileValidator
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.multipart.MultipartFile
 
 
 @RestController
@@ -18,6 +20,27 @@ class WishController(
     override fun deleteWishById(wishId: Long): ResponseEntity<Unit> {
         wishService.delete(wishId)
         return ResponseEntity.ok().build()
+    }
+
+    override fun updateWishByIdWithFile(
+        wishId: Long,
+        title: String?,
+        description: String?,
+        photo: MultipartFile?,
+        price: Double?
+    ): ResponseEntity<WishResponse> {
+        photo?.let { FileValidator.validateImage(it) }
+
+        val updateRequest = WishUpdateRequest(
+            title = title,
+            description = description,
+            price = price,
+            photoUrl = null
+        )
+
+        val wish = wishService.updateWithFile(wishId, updateRequest, photo)
+
+        return ResponseEntity.ok(wishMapper.toResponse(wish))
     }
 
     override fun getWishById(wishId: Long): ResponseEntity<WishResponse> {

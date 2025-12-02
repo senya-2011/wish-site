@@ -131,9 +131,53 @@ services:
     networks:
       - dev-net
 
+  minio:
+    image: minio/minio:latest
+    container_name: dabwish-minio
+    restart: unless-stopped
+    ports:
+      - "9000:9000"  
+      - "9001:9001"  
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER:-minioadmin}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:-minioadmin}
+      - MINIO_BUCKET_NAME=${MINIO_BUCKET_NAME:-dabwish-images}
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - dev-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+
+  minio-init:
+    image: minio/mc
+    container_name: dabwish-minio-init
+    depends_on:
+      minio:
+        condition: service_healthy
+    networks:
+      - dev-net
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set myminio http://minio:9000 ${MINIO_ROOT_USER:-minioadmin} ${MINIO_ROOT_PASSWORD:-minioadmin};
+
+      mc mb myminio/dabwish-images --ignore-existing;
+
+      mc anonymous set download myminio/dabwish-images;
+
+      echo '*** MinIO init completed successfully ***';
+      exit 0;
+      "
+
 volumes:
   pgdata:
   kafka_1_data:
   redis_data:
   prometheusdata:
   grafanadata:
+  minio_data:

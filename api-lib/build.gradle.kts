@@ -22,12 +22,16 @@ openApiGenerate {
     outputDir.set(openApiOutputDir.get().asFile.absolutePath)
     apiPackage.set("com.dabwish.dabwish.generated.api")
     modelPackage.set("com.dabwish.dabwish.generated.dto")
+    typeMappings.put("string+binary", "MultipartFile")
+    importMappings.put("MultipartFile", "org.springframework.web.multipart.MultipartFile")
     configOptions.set(
         mapOf(
             "interfaceOnly" to "true",
             "useBeanValidation" to "true",
             "useSpringBoot3" to "true",
-            "dateLibrary" to "java8"
+            "dateLibrary" to "java8",
+            "library" to "spring-boot",
+            "reactive" to "false"
         )
     )
 }
