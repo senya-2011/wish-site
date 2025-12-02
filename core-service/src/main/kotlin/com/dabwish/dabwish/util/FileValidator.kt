@@ -14,7 +14,7 @@ object FileValidator {
     )
 
     fun validateImage(file: MultipartFile) {
-        if (file.isEmpty) return // Или throw, если файл обязателен
+        if (file.isEmpty) return
 
         if (file.size > MAX_SIZE) {
             throw FileSizeLimitExceededException()

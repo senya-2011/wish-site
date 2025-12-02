@@ -9,6 +9,7 @@ import com.dabwish.dabwish.mapper.WishMapper
 import com.dabwish.dabwish.model.wish.Wish
 import com.dabwish.dabwish.repository.UserRepository
 import com.dabwish.dabwish.repository.WishRepository
+import com.dabwish.dabwish.util.TransactionUtil
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.CachePut
@@ -18,6 +19,7 @@ import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.web.multipart.MultipartFile
 
 @Service
 class WishService(
@@ -27,6 +29,25 @@ class WishService(
     @Autowired(required = false) private val wishEventPublisher: WishEventPublisher?,
     private val minioService: MinioService,
 ) {
+
+    private fun isLastReferenceToPhoto(url: String): Boolean {
+        return wishRepository.countByPhotoUrl(url) <= 1
+    }
+
+    private fun deleteFileQuietly(objectNameOrUrl: String?) {
+        if (objectNameOrUrl.isNullOrBlank()) return
+        try {
+            val objectName = if (objectNameOrUrl.startsWith("http")) {
+                minioService.extractObjectNameFromUrl(objectNameOrUrl)
+            } else {
+                objectNameOrUrl
+            }
+
+            objectName?.let { minioService.deleteFile(it) }
+        } catch (e: Exception) {
+        }
+    }
+
     @Cacheable(
         cacheNames = ["userWishes"],
         key = "#userId + ':' + #pageable.pageNumber + ':' + #pageable.pageSize + ':' + #pageable.sort.toString()",
@@ -55,6 +76,41 @@ class WishService(
         val wish = wishMapper.toEntity(request, user)
         val saved = wishRepository.save(wish)
         wishEventPublisher?.publishWishCreated(saved)
+
+        return saved
+    }
+
+    @Transactional
+    @Caching(
+        put = [CachePut(cacheNames = ["wishesById"], key = "#result.id")],
+        evict = [CacheEvict(cacheNames = ["userWishes"], allEntries = true)],
+    )
+    fun createWithFile(userId: Long, request: WishRequest, file: MultipartFile?): Wish {
+        val user = userRepository.findById(userId)
+            .orElseThrow { UserNotFoundException(userId) }
+
+        var uploadedUrl: String? = null
+
+        if (file != null && !file.isEmpty) {
+            val objectName = minioService.uploadFile(file, prefix = "wishes/")
+            uploadedUrl = minioService.getFileUrl(objectName)
+
+            TransactionUtil.afterRollback {
+                deleteFileQuietly(objectName)
+            }
+        }
+
+        val wish = wishMapper.toEntity(request, user)
+
+        if (uploadedUrl != null) {
+            wish.photoUrl = uploadedUrl
+        } else {
+            wish.photoUrl = request.photoUrl
+        }
+
+        val saved = wishRepository.save(wish)
+        wishEventPublisher?.publishWishCreated(saved)
+
         return saved
     }
 
@@ -68,17 +124,15 @@ class WishService(
     fun delete(id: Long) {
         val wish = wishRepository.findById(id).orElseThrow { WishNotFoundException(id) }
 
-        wish.photoUrl?.let { url ->
-            val count = wishRepository.countByPhotoUrl(url)
+        wishRepository.deleteById(id)
 
-            if (count <= 1) {
-                minioService.extractObjectNameFromUrl(url)?.let { objectName ->
-                    minioService.deleteFile(objectName)
+        wish.photoUrl?.let { url ->
+            if (isLastReferenceToPhoto(url)) {
+                TransactionUtil.afterCommit {
+                    deleteFileQuietly(url)
                 }
             }
         }
-        
-        wishRepository.deleteById(id)
     }
 
     @Transactional
@@ -86,25 +140,25 @@ class WishService(
         put = [CachePut(cacheNames = ["wishesById"], key = "#result.id")],
         evict = [CacheEvict(cacheNames = ["userWishes"], allEntries = true)],
     )
-    fun update(id: Long, wishUpdateRequest: WishUpdateRequest): Wish {
+    fun update(id: Long, request: WishUpdateRequest): Wish {
         val wish = wishRepository.findById(id).orElseThrow { WishNotFoundException(id) }
 
-        wish.photoUrl?.let { url ->
-            val count = wishRepository.countByPhotoUrl(url)
+        val oldUrl = wish.photoUrl
+        val newUrl = request.photoUrl
 
-            if (count <= 1) {
-                if (wishUpdateRequest.photoUrl != null && wishUpdateRequest.photoUrl != wish.photoUrl) {
-                    wish.photoUrl?.let { oldUrl ->
-                        minioService.extractObjectNameFromUrl(oldUrl)?.let { objectName ->
-                            minioService.deleteFile(objectName)
-                        }
+        if (newUrl != oldUrl) {
+            oldUrl?.let { url ->
+                if (isLastReferenceToPhoto(url)) {
+                    TransactionUtil.afterCommit {
+                        deleteFileQuietly(url)
                     }
                 }
             }
         }
 
-        wishMapper.updateEntityFromRequest(wishUpdateRequest, wish)
+        wishMapper.updateEntityFromRequest(request, wish)
         val saved = wishRepository.save(wish)
+
         wishEventPublisher?.publishWishUpdated(saved)
         return saved
     }
