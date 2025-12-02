@@ -205,6 +205,57 @@ paths:
               schema:
                 $ref: "#/components/schemas/WishResponse"
 
+  /users/{user_id}/wishes/with-file:
+    post:
+      security:
+        - bearerAuth: []
+      summary: Создать новое желание с файлом (транзакционно)
+      description: |
+        Создает wish с файлом в одном запросе. Использует двухфазный коммит для распределенной транзакции между БД и MinIO.
+        При ошибке автоматически откатывает изменения в обоих системах.
+      tags:
+        - Wishes
+      operationId: createWishWithFile
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: Идентификатор пользователя
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/CreateWishWithFileRequest"
+      responses:
+        '200':
+          description: Желание успешно создано
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WishResponse"
+        '400':
+          description: Ошибка валидации
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '404':
+          description: Пользователь не найден
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '500':
+          description: Ошибка при создании wish или загрузке файла
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
   /wishes/{wish_id}:
     parameters:
       - name: wish_id
@@ -564,6 +615,29 @@ components:
         price:
           type: number
           format: double
+
+    CreateWishWithFileRequest:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          example: "PlayStation 5"
+          description: Название желания
+        description:
+          type: string
+          example: "С дисководом"
+          description: Описание желания
+        photo:
+          type: string
+          format: binary
+          description: Файл изображения (опционально, максимум 10MB, только изображения)
+        price:
+          type: number
+          format: double
+          description: Ориентировочная цена
+          example: 49999.99
 
     WishUpdateRequest:
       type: object

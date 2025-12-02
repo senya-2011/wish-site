@@ -22,6 +22,8 @@ openApiGenerate {
     outputDir.set(openApiOutputDir.get().asFile.absolutePath)
     apiPackage.set("com.dabwish.dabwish.generated.api")
     modelPackage.set("com.dabwish.dabwish.generated.dto")
+    typeMappings.put("string+binary", "MultipartFile")
+    importMappings.put("MultipartFile", "org.springframework.web.multipart.MultipartFile")
     configOptions.set(
         mapOf(
             "interfaceOnly" to "true",
