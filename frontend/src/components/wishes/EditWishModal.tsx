@@ -22,7 +22,7 @@ import { PhotoUpload } from "./PhotoUpload";
 type EditWishModalProps = {
   isOpen: boolean;
   form: WishFormState;
-  onChange: (field: keyof WishFormState, value: string) => void;
+  onChange: (field: keyof WishFormState, value: string | File | null) => void;
   onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
   onClose: () => void;
   isLoading: boolean;
@@ -62,6 +62,7 @@ export const EditWishModal = ({
           </FormControl>
           <PhotoUpload
             currentPhotoUrl={form.photoUrl}
+            onFileChange={(file) => onChange("photoFile", file)}
             onPhotoUrlChange={(url) => onChange("photoUrl", url)}
           />
           <FormControl>

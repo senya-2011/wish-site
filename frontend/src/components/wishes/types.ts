@@ -5,6 +5,7 @@ export type WishFormState = {
   description: string;
   photoUrl: string;
   price: string;
+  photoFile?: File | null;
 };
 
 export type WishListHandlers = {

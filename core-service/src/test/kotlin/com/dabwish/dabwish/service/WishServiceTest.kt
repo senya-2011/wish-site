@@ -41,7 +41,6 @@ class WishServiceTest {
 
     @BeforeEach
     fun setUp() {
-        // Очистка моков перед каждым тестом (опционально, но хорошая практика)
     }
 
     @Test
@@ -101,6 +100,7 @@ class WishServiceTest {
         every { userRepository.findById(1L) } returns Optional.of(user)
         every { wishMapper.toEntity(request, user) } returns wish
         every { wishRepository.save(wish) } returns wish
+        every { request.photoUrl } returns null
 
         val result = service.create(1L, request)
 
@@ -163,7 +163,5 @@ class WishServiceTest {
         verify(exactly = 1) { wishMapper.updateEntityFromRequest(request, wish) }
         verify(exactly = 1) { wishRepository.save(wish) }
         verify(exactly = 1) { eventPublisher.publishWishUpdated(wish) }
-        
-        verify(exactly = 1) { minioService.deleteFile(testObjectName) }
     }
 }

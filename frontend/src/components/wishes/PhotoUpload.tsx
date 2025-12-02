@@ -6,24 +6,27 @@ import {
   HStack,
   Image,
   Input,
-  Spinner,
   Text,
   VStack,
 } from "@chakra-ui/react";
 import { useState, useRef } from "react";
-import { filesApi } from "../../lib/api-client";
 
 type PhotoUploadProps = {
   currentPhotoUrl?: string;
-  onPhotoUrlChange: (url: string) => void;
+  onFileChange: (file: File | null) => void;
+  onPhotoUrlChange?: (url: string) => void;
 };
 
-export const PhotoUpload = ({ currentPhotoUrl, onPhotoUrlChange }: PhotoUploadProps) => {
-  const [isUploading, setIsUploading] = useState(false);
+export const PhotoUpload = ({ 
+  currentPhotoUrl, 
+  onFileChange,
+  onPhotoUrlChange 
+}: PhotoUploadProps) => {
+  const [previewUrl, setPreviewUrl] = useState<string | null>(currentPhotoUrl || null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -39,31 +42,22 @@ export const PhotoUpload = ({ currentPhotoUrl, onPhotoUrlChange }: PhotoUploadPr
     }
 
     setUploadError(null);
-    setIsUploading(true);
-
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const response = await filesApi.uploadFile(file);
-      const fileUrl = response.data.file_url;
-
-      if (fileUrl) {
-        onPhotoUrlChange(fileUrl);
-      }
-    } catch (error) {
-      console.error("Upload error:", error);
-      setUploadError("Не удалось загрузить файл");
-    } finally {
-      setIsUploading(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
-    }
+    
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPreviewUrl(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+    
+    onFileChange(file);
   };
 
   const handleRemovePhoto = () => {
-    onPhotoUrlChange("");
+    setPreviewUrl(null);
+    onFileChange(null);
+    if (onPhotoUrlChange) {
+      onPhotoUrlChange("");
+    }
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -73,10 +67,10 @@ export const PhotoUpload = ({ currentPhotoUrl, onPhotoUrlChange }: PhotoUploadPr
     <FormControl>
       <FormLabel>Фото</FormLabel>
       <VStack align="stretch" spacing={3}>
-        {currentPhotoUrl && (
+        {(previewUrl || currentPhotoUrl) && (
           <Box position="relative" borderRadius="md" overflow="hidden" maxW="300px">
             <Image
-              src={currentPhotoUrl}
+              src={previewUrl || currentPhotoUrl}
               alt="Preview"
               objectFit="cover"
               maxH="200px"
@@ -101,7 +95,6 @@ export const PhotoUpload = ({ currentPhotoUrl, onPhotoUrlChange }: PhotoUploadPr
             type="file"
             accept="image/*"
             onChange={handleFileSelect}
-            disabled={isUploading}
             display="none"
             id="photo-upload"
           />
@@ -109,19 +102,11 @@ export const PhotoUpload = ({ currentPhotoUrl, onPhotoUrlChange }: PhotoUploadPr
             as="label"
             htmlFor="photo-upload"
             cursor="pointer"
-            isDisabled={isUploading}
             colorScheme="blue"
             variant="outline"
             size="sm"
           >
-            {isUploading ? (
-              <>
-                <Spinner size="sm" mr={2} />
-                Загрузка...
-              </>
-            ) : (
-              "Выбрать файл"
-            )}
+            Выбрать файл
           </Button>
           <Text fontSize="sm" color="gray.500">
             Максимум 10MB, только изображения
