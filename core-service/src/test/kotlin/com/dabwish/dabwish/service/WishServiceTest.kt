@@ -119,6 +119,7 @@ class WishServiceTest {
         every { minioService.deleteFile("photo.jpg") } returns Unit
         every { wishRepository.findById(5L) } returns Optional.of(wish)
         every { wishRepository.deleteById(5L) } just Runs
+        every { wishRepository.countByPhotoUrl("http://some-url/photo.jpg")} returns 1L
 
         service.delete(5L)
 
@@ -142,10 +143,18 @@ class WishServiceTest {
     @Test
     fun `update modifies wish and publishes event`() {
         val request = mockk<WishUpdateRequest>(relaxed = true)
-        val wish = mockk<Wish>(relaxed = true)
+        val testUrl = "http://some-url/photo.jpg"
+        val testObjectName = "photo.jpg"
+
+        val wish = mockk<Wish>(relaxed = true) {
+            every { photoUrl } returns testUrl
+        }
 
         every { wishRepository.findById(2L) } returns Optional.of(wish)
         every { wishRepository.save(wish) } returns wish
+        every { wishRepository.countByPhotoUrl(testUrl) } returns 1L
+        every { minioService.extractObjectNameFromUrl(testUrl) } returns testObjectName
+        every { minioService.deleteFile(testObjectName) } just Runs
 
         val result = service.update(2L, request)
 
@@ -154,5 +163,7 @@ class WishServiceTest {
         verify(exactly = 1) { wishMapper.updateEntityFromRequest(request, wish) }
         verify(exactly = 1) { wishRepository.save(wish) }
         verify(exactly = 1) { eventPublisher.publishWishUpdated(wish) }
+        
+        verify(exactly = 1) { minioService.deleteFile(testObjectName) }
     }
 }
