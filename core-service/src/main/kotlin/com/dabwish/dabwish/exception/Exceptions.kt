@@ -23,3 +23,13 @@ class FileStorageException(message: String, cause: Throwable? = null) : RuntimeE
 class InvalidFileFormatException(): AppException("Only images (JPEG, PNG, WEBP) are allowed")
 
 class FileSizeLimitExceededException(): AppException("File size exceeds 10MB limit")
+
+// Telegram Verification
+class TelegramAlreadyVerifiedException(userId: Long) : AppException("Telegram already verified for user $userId")
+class TelegramVerificationCodeExpiredException() : AppException("Verification code has expired")
+class TelegramVerificationCodeInvalidException() : AppException("Invalid verification code")
+
+// Subscriptions
+class CannotSubscribeToSelfException() : AppException("Cannot subscribe to yourself")
+class AlreadySubscribedException(subscriberId: Long, subscribedToId: Long) : AppException("User $subscriberId is already subscribed to user $subscribedToId")
+class NotSubscribedException(subscriberId: Long, subscribedToId: Long) : AppException("User $subscriberId is not subscribed to user $subscribedToId")
