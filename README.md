@@ -1,3 +1,3 @@
 # Approximate plan of the system being developed
 
-![alt text](https://github.com/senya-2011/wish-site/blob/main/wish-site-v2.png)
+![alt text](https://github.com/senya-2011/wish-site/blob/main/wish-site-v3.png)
