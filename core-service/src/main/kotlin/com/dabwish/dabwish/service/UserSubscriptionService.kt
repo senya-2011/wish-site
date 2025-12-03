@@ -8,6 +8,11 @@ import com.dabwish.dabwish.model.user.User
 import com.dabwish.dabwish.model.user.UserSubscription
 import com.dabwish.dabwish.repository.UserRepository
 import com.dabwish.dabwish.repository.UserSubscriptionRepository
+import org.springframework.cache.annotation.CacheEvict
+import org.springframework.cache.annotation.Cacheable
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageImpl
+import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -17,6 +22,7 @@ class UserSubscriptionService(
     private val userSubscriptionRepository: UserSubscriptionRepository,
 ) {
     @Transactional
+    @CacheEvict(cacheNames = ["userSubscriptions"], key = "#subscriberId")
     fun subscribe(subscriberId: Long, subscribedToId: Long): UserSubscription {
         if (subscriberId == subscribedToId) {
             throw CannotSubscribeToSelfException()
@@ -39,6 +45,7 @@ class UserSubscriptionService(
     }
 
     @Transactional
+    @CacheEvict(cacheNames = ["userSubscriptions"], key = "#subscriberId")
     fun unsubscribe(subscriberId: Long, subscribedToId: Long) {
         if (!userSubscriptionRepository.existsBySubscriberIdAndSubscribedToId(subscriberId, subscribedToId)) {
             throw NotSubscribedException(subscriberId, subscribedToId)
@@ -63,6 +70,20 @@ class UserSubscriptionService(
 
         val subscriptions = userSubscriptionRepository.findBySubscriberId(userId)
         return subscriptions.map { it.subscribedTo }
+    }
+
+    @Cacheable(
+        cacheNames = ["userSubscriptions"],
+        key = "#userId + ':' + #pageable.pageNumber + ':' + #pageable.pageSize + ':' + #pageable.sort.toString()",
+    )
+    fun getSubscriptions(userId: Long, pageable: Pageable): Page<User> {
+        if (!userRepository.existsById(userId)) {
+            throw UserNotFoundException(userId)
+        }
+
+        val subscriptionsPage = userSubscriptionRepository.findBySubscriberId(userId, pageable)
+        val users = subscriptionsPage.content.map { it.subscribedTo }
+        return PageImpl(users, pageable, subscriptionsPage.totalElements)
     }
 
     fun isSubscribed(subscriberId: Long, subscribedToId: Long): Boolean {

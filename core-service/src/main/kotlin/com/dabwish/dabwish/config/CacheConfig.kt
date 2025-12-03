@@ -191,6 +191,7 @@ class CacheConfig(
                     "wishesById" to wishesCache,
                     "userWishes" to defaultConfig,
                     "userSearch" to defaultConfig,
+                    "userSubscriptions" to defaultConfig,
                 ),
             )
             .enableStatistics()
