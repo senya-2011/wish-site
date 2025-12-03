@@ -138,6 +138,54 @@ paths:
         '400':
           description: Ошибка валидации
 
+  /users/search:
+    get:
+      security:
+        - bearerAuth: []
+      summary: Поиск пользователей
+      description: Поиск пользователей по имени с пагинацией
+      tags:
+        - Users
+      operationId: searchUsers
+      parameters:
+        - name: query
+          in: query
+          required: true
+          description: Поисковый запрос (имя пользователя)
+          schema:
+            type: string
+            minLength: 1
+        - name: page
+          in: query
+          required: false
+          description: Номер страницы (0-based)
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: size
+          in: query
+          required: false
+          description: Количество элементов на странице
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+      responses:
+        '200':
+          description: Пагинированный список найденных пользователей
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserPageResponse"
+        '400':
+          description: Ошибка валидации
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
   # --- WISHES ---
 
 
@@ -367,6 +415,54 @@ paths:
                 $ref: "#/components/schemas/Error"
         '500':
           description: Ошибка при обновлении wish или загрузке файла
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /wishes/search:
+    get:
+      security:
+        - bearerAuth: []
+      summary: Поиск желаний
+      description: Поиск желаний по названию, описанию и другим полям с пагинацией
+      tags:
+        - Wishes
+      operationId: searchWishes
+      parameters:
+        - name: query
+          in: query
+          required: true
+          description: Поисковый запрос (название, описание и т.д.)
+          schema:
+            type: string
+            minLength: 1
+        - name: page
+          in: query
+          required: false
+          description: Номер страницы (0-based)
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: size
+          in: query
+          required: false
+          description: Количество элементов на странице
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+      responses:
+        '200':
+          description: Пагинированный список найденных желаний
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WishPageResponse"
+        '400':
+          description: Ошибка валидации
           content:
             application/json:
               schema:
@@ -644,6 +740,36 @@ components:
           type: integer
           format: int64
           description: Общее количество желаний
+        total_pages:
+          type: integer
+          format: int32
+          description: Общее количество страниц
+
+    UserPageResponse:
+      type: object
+      required:
+        - items
+        - page
+        - size
+        - total_elements
+        - total_pages
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserResponse"
+        page:
+          type: integer
+          format: int32
+          description: Текущий номер страницы (0-based)
+        size:
+          type: integer
+          format: int32
+          description: Размер страницы
+        total_elements:
+          type: integer
+          format: int64
+          description: Общее количество пользователей
         total_pages:
           type: integer
           format: int32

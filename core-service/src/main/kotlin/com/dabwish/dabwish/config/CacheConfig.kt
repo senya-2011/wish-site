@@ -190,6 +190,7 @@ class CacheConfig(
                     "usersById" to usersCache,
                     "wishesById" to wishesCache,
                     "userWishes" to defaultConfig,
+                    "userSearch" to defaultConfig,
                 ),
             )
             .enableStatistics()
