@@ -1,6 +1,7 @@
 package com.dabwish.dabwish.controller
 
 import com.dabwish.dabwish.generated.api.WishesApi
+import com.dabwish.dabwish.generated.dto.WishPageResponse
 import com.dabwish.dabwish.generated.dto.WishResponse
 import com.dabwish.dabwish.generated.dto.WishUpdateRequest
 import com.dabwish.dabwish.mapper.WishMapper
@@ -56,5 +57,13 @@ class WishController(
         val wish = wishService.update(wishId, wishUpdateRequest)
         val wishResponse = wishMapper.toResponse(wish)
         return ResponseEntity.ok(wishResponse)
+    }
+
+    override fun searchWishes(
+        query: String,
+        page: Int,
+        size: Int
+    ): ResponseEntity<WishPageResponse> {
+        return super.searchWishes(query, page, size)
     }
 }

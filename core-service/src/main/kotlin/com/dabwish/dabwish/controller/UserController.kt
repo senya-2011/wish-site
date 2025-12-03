@@ -1,25 +1,17 @@
 package com.dabwish.dabwish.controller
 
 import com.dabwish.dabwish.generated.api.UsersApi
-import com.dabwish.dabwish.generated.dto.UserRequest
-import com.dabwish.dabwish.generated.dto.UserResponse
-import com.dabwish.dabwish.generated.dto.UserUpdateRequest
-import com.dabwish.dabwish.generated.dto.WishPageResponse
-import com.dabwish.dabwish.generated.dto.WishRequest
-import com.dabwish.dabwish.generated.dto.WishResponse
+import com.dabwish.dabwish.generated.dto.*
 import com.dabwish.dabwish.mapper.UserMapper
 import com.dabwish.dabwish.mapper.WishMapper
 import com.dabwish.dabwish.service.UserService
 import com.dabwish.dabwish.service.WishService
 import com.dabwish.dabwish.util.FileValidator
-import org.springframework.http.MediaType
-import org.springframework.http.ResponseEntity
-import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
+import org.springframework.http.ResponseEntity
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.RestController
-import org.springframework.core.io.Resource
-import org.springframework.http.HttpStatus
 import org.springframework.web.multipart.MultipartFile
 
 @RestController
@@ -111,6 +103,25 @@ class UserController(
             propertySize = wishesPage.size,
             totalElements = wishesPage.totalElements,
             totalPages = wishesPage.totalPages,
+        )
+        return ResponseEntity.ok(dto)
+    }
+
+    override fun searchUsers(
+        query: String,
+        page: Int,
+        size: Int
+    ): ResponseEntity<UserPageResponse> {
+        val pageNumber = page.coerceAtLeast(0)
+        val pageSize = size.coerceIn(1, 50)
+        val pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.ASC, "name"))
+        val usersPage = userService.searchByName(query, pageable)
+        val dto = UserPageResponse(
+            items = userMapper.userListToUserResponseList(usersPage.content),
+            page = usersPage.number,
+            propertySize = usersPage.size,
+            totalElements = usersPage.totalElements,
+            totalPages = usersPage.totalPages,
         )
         return ResponseEntity.ok(dto)
     }
