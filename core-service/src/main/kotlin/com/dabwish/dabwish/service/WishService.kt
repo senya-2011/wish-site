@@ -1,6 +1,7 @@
 package com.dabwish.dabwish.service
 
 import com.dabwish.dabwish.events.WishEventPublisher
+import com.dabwish.dabwish.events.WishNotificationEventPublisher
 import com.dabwish.dabwish.exception.UserNotFoundException
 import com.dabwish.dabwish.exception.WishNotFoundException
 import com.dabwish.dabwish.generated.dto.WishRequest
@@ -33,6 +34,8 @@ class WishService(
     @Autowired(required = false) private val wishEventPublisher: WishEventPublisher?,
     private val minioService: MinioService,
     @Lazy @Autowired(required = false) private val wishElasticsearchRepository: WishElasticsearchRepository?,
+    @Autowired(required = false) private val wishNotificationEventPublisher: WishNotificationEventPublisher?,
+    @Autowired(required = false) private val userSubscriptionService: UserSubscriptionService?,
 ) {
     private val logger = LoggerFactory.getLogger(this::class.java)
 
@@ -87,6 +90,19 @@ class WishService(
         }
     }
 
+    private fun notifySubscribers(wish: Wish) {
+        try {
+            val subscribers = userSubscriptionService?.getSubscribers(wish.user.id) ?: return
+            subscribers.forEach { subscriber ->
+                if (subscriber.telegramUsername != null) {
+                    wishNotificationEventPublisher?.publishWishNotification(wish, subscriber)
+                }
+            }
+        } catch (e: Exception) {
+            logger.warn("Failed to notify subscribers for wish ${wish.id}: ${e.message}", e)
+        }
+    }
+
     @Cacheable(
         cacheNames = ["userWishes"],
         key = "#userId + ':' + #pageable.pageNumber + ':' + #pageable.pageSize + ':' + #pageable.sort.toString()",
@@ -116,6 +132,11 @@ class WishService(
         val saved = wishRepository.save(wish)
         wishEventPublisher?.publishWishCreated(saved)
 
+        TransactionUtil.afterCommit {
+            syncToElasticsearch(saved)
+            notifySubscribers(saved)
+        }
+
         return saved
     }
 
@@ -141,6 +162,7 @@ class WishService(
         wishEventPublisher?.publishWishCreated(saved)
         TransactionUtil.afterCommit {
             syncToElasticsearch(saved)
+            notifySubscribers(saved)
         }
 
         return saved

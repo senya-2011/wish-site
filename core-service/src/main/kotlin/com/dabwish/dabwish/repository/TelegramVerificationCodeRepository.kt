@@ -18,6 +18,6 @@ interface TelegramVerificationCodeRepository : JpaRepository<TelegramVerificatio
     
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("DELETE FROM TelegramVerificationCode t WHERE t.expiresAt < :expiresAt")
-    fun deleteByExpiresAtBefore(@Param("expiresAt") expiresAt: OffsetDateTime)
+    fun deleteByExpiresAtBefore(@Param("expiresAt") expiresAt: OffsetDateTime): Int
 }
 
