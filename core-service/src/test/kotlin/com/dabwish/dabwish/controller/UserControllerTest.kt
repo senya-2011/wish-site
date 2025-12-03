@@ -6,12 +6,17 @@ import com.dabwish.dabwish.generated.dto.UserResponse
 import com.dabwish.dabwish.generated.dto.UserUpdateRequest
 import com.dabwish.dabwish.generated.dto.WishRequest
 import com.dabwish.dabwish.generated.dto.WishResponse
+import com.dabwish.dabwish.generated.dto.*
 import com.dabwish.dabwish.mapper.UserMapper
+import com.dabwish.dabwish.mapper.UserSubscriptionMapper
 import com.dabwish.dabwish.mapper.WishMapper
 import com.dabwish.dabwish.model.user.User
 import com.dabwish.dabwish.model.user.UserRole
+import com.dabwish.dabwish.model.user.UserSubscription
 import com.dabwish.dabwish.model.wish.Wish
+import com.dabwish.dabwish.service.TelegramVerificationService
 import com.dabwish.dabwish.service.UserService
+import com.dabwish.dabwish.service.UserSubscriptionService
 import com.dabwish.dabwish.service.WishService
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.ninjasquad.springmockk.MockkBean
@@ -28,6 +33,8 @@ import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
 import org.springframework.mock.web.MockMultipartFile
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.test.web.servlet.delete
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.multipart
@@ -61,6 +68,15 @@ class UserControllerTest(
 
     @MockkBean
     private lateinit var wishMapper: WishMapper
+
+    @MockkBean
+    private lateinit var telegramVerificationService: TelegramVerificationService
+
+    @MockkBean
+    private lateinit var userSubscriptionService: UserSubscriptionService
+
+    @MockkBean
+    private lateinit var userSubscriptionMapper: UserSubscriptionMapper
 
     val userRequest = UserRequest(name = "user", password = "pass")
     val user = User(id = 1, name = "user", role = UserRole.MEMBER)
@@ -280,5 +296,126 @@ class UserControllerTest(
                 any()
             )
         }
+    }
+
+    private fun setupSecurityContext(user: User) {
+        val authentication = UsernamePasswordAuthenticationToken(user, null, emptyList())
+        SecurityContextHolder.getContext().authentication = authentication
+    }
+
+    // --- TELEGRAM VERIFICATION ---
+    @Test
+    fun `verifyTelegram returns 200 and success response`() {
+        setupSecurityContext(user)
+        val request = TelegramVerificationRequest(telegramUsername = "testuser")
+        every { telegramVerificationService.requestVerification(1L, "testuser") } returns "123456"
+
+        mockMvc.post("/api/users/telegram/verify") {
+            contentType = MediaType.APPLICATION_JSON
+            content = objectMapper.writeValueAsString(request)
+        }.andExpect {
+            status { isOk() }
+            content { contentType(MediaType.APPLICATION_JSON) }
+            jsonPath("$.success") { value(true) }
+            jsonPath("$.message") { exists() }
+        }
+
+        verify(exactly = 1) { telegramVerificationService.requestVerification(1L, "testuser") }
+    }
+
+    @Test
+    fun `confirmTelegram returns 200 and success response`() {
+        setupSecurityContext(user)
+        val request = TelegramVerificationConfirmRequest(verificationCode = "123456")
+        every { telegramVerificationService.confirmVerification(1L, "123456") } returns true
+
+        mockMvc.post("/api/users/telegram/confirm") {
+            contentType = MediaType.APPLICATION_JSON
+            content = objectMapper.writeValueAsString(request)
+        }.andExpect {
+            status { isOk() }
+            content { contentType(MediaType.APPLICATION_JSON) }
+            jsonPath("$.success") { value(true) }
+            jsonPath("$.message") { exists() }
+        }
+
+        verify(exactly = 1) { telegramVerificationService.confirmVerification(1L, "123456") }
+    }
+
+    // --- SUBSCRIPTIONS ---
+    @Test
+    fun `subscribeToUser returns 200 and subscription response`() {
+        setupSecurityContext(user)
+        val subscribedTo = User(id = 2L, name = "SubscribedTo", role = UserRole.MEMBER)
+        val subscription = UserSubscription(
+            id = 1L,
+            subscriber = user,
+            subscribedTo = subscribedTo
+        )
+        val subscriptionResponse = SubscriptionResponse(
+            subscriberId = user.id,
+            subscribedToId = subscribedTo.id,
+            createdAt = OffsetDateTime.now()
+        )
+
+        every { userSubscriptionService.subscribe(1L, 2L) } returns subscription
+        every { userSubscriptionMapper.toResponse(subscription) } returns subscriptionResponse
+
+        mockMvc.post("/api/users/2/subscribe") {
+            contentType = MediaType.APPLICATION_JSON
+        }.andExpect {
+            status { isOk() }
+            content { contentType(MediaType.APPLICATION_JSON) }
+            jsonPath("$.subscriber_id") { value(user.id.toInt()) }
+            jsonPath("$.subscribed_to_id") { value(subscribedTo.id.toInt()) }
+        }
+
+        verify(exactly = 1) { userSubscriptionService.subscribe(1L, 2L) }
+    }
+
+    @Test
+    fun `unsubscribeFromUser returns 200`() {
+        setupSecurityContext(user)
+        every { userSubscriptionService.unsubscribe(1L, 2L) } returns Unit
+
+        mockMvc.delete("/api/users/2/subscribe") {
+            contentType = MediaType.APPLICATION_JSON
+        }.andExpect {
+            status { isOk() }
+        }
+
+        verify(exactly = 1) { userSubscriptionService.unsubscribe(1L, 2L) }
+    }
+
+    @Test
+    fun `getMySubscriptions returns paged list of subscriptions`() {
+        setupSecurityContext(user)
+        val subscribedTo = User(id = 2L, name = "SubscribedTo", role = UserRole.MEMBER)
+        val subscriptions = listOf(subscribedTo)
+        val subscriptionsResponse = listOf(
+            UserResponse(
+                userId = subscribedTo.id,
+                name = subscribedTo.name,
+                role = UserResponse.Role.member,
+                createdAt = OffsetDateTime.now()
+            )
+        )
+        val pageable = PageRequest.of(0, 10)
+        val subscriptionsPage = org.springframework.data.domain.PageImpl(subscriptions, pageable, 1)
+
+        every { userSubscriptionService.getSubscriptions(1L, any()) } returns subscriptionsPage
+        every { userMapper.userListToUserResponseList(subscriptions) } returns subscriptionsResponse
+
+        mockMvc.get("/api/users/subscriptions?page=0&size=10") {
+            contentType = MediaType.APPLICATION_JSON
+        }.andExpect {
+            status { isOk() }
+            content { contentType(MediaType.APPLICATION_JSON) }
+            jsonPath("$.items[0].user_id") { value(subscribedTo.id.toInt()) }
+            jsonPath("$.page") { value(0) }
+            jsonPath("$.total_pages") { value(1) }
+        }
+
+        verify(exactly = 1) { userSubscriptionService.getSubscriptions(1L, any()) }
     }
 }
