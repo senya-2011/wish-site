@@ -7,6 +7,8 @@ import com.dabwish.dabwish.generated.dto.WishUpdateRequest
 import com.dabwish.dabwish.mapper.WishMapper
 import com.dabwish.dabwish.service.WishService
 import com.dabwish.dabwish.util.FileValidator
+import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Sort
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
@@ -64,6 +66,17 @@ class WishController(
         page: Int,
         size: Int
     ): ResponseEntity<WishPageResponse> {
-        return super.searchWishes(query, page, size)
+        val pageNumber = page.coerceAtLeast(0)
+        val pageSize = size.coerceIn(1, 50)
+        val pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, "createdAt"))
+        val wishesPage = wishService.search(query, pageable)
+        val dto = WishPageResponse(
+            items = wishMapper.toResponseList(wishesPage.content),
+            page = wishesPage.number,
+            propertySize = wishesPage.size,
+            totalElements = wishesPage.totalElements,
+            totalPages = wishesPage.totalPages,
+        )
+        return ResponseEntity.ok(dto)
     }
 }

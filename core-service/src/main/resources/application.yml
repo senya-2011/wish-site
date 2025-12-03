@@ -28,6 +28,10 @@ spring:
           max-idle: 16
           min-idle: 4
           max-wait: 100ms
+    elasticsearch:
+      uris: ${ELASTICSEARCH_URI:http://localhost:9200}
+      repositories:
+        enabled: ${ELASTICSEARCH_ENABLED:true}
   profiles:
     active: ${SPRING_ACTIVE_PROFILE:dev}
   kafka:
@@ -67,6 +71,9 @@ app:
       users-seconds: ${APP_CACHE_USERS_TTL:900}
       wishes-seconds: ${APP_CACHE_WISHES_TTL:600}
       wish-list-seconds: ${APP_CACHE_WISH_LIST_TTL:120}
+  elasticsearch:
+    enabled: ${ELASTICSEARCH_ENABLED:true}
+    auto-reindex: ${ELASTICSEARCH_AUTO_REINDEX:true}
 
 management:
   endpoints:

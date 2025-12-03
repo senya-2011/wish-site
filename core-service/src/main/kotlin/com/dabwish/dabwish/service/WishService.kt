@@ -8,6 +8,7 @@ import com.dabwish.dabwish.generated.dto.WishUpdateRequest
 import com.dabwish.dabwish.mapper.WishMapper
 import com.dabwish.dabwish.model.wish.Wish
 import com.dabwish.dabwish.repository.UserRepository
+import com.dabwish.dabwish.repository.WishElasticsearchRepository
 import com.dabwish.dabwish.repository.WishRepository
 import com.dabwish.dabwish.util.TransactionUtil
 import org.springframework.beans.factory.annotation.Autowired
@@ -15,8 +16,11 @@ import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.CachePut
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.cache.annotation.Caching
+import org.springframework.context.annotation.Lazy
 import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Pageable
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.MultipartFile
@@ -28,7 +32,9 @@ class WishService(
     private val userRepository: UserRepository,
     @Autowired(required = false) private val wishEventPublisher: WishEventPublisher?,
     private val minioService: MinioService,
+    @Lazy @Autowired(required = false) private val wishElasticsearchRepository: WishElasticsearchRepository?,
 ) {
+    private val logger = LoggerFactory.getLogger(this::class.java)
 
     private fun isLastReferenceToPhoto(url: String): Boolean {
         return wishRepository.countByPhotoUrl(url) <= 1
@@ -64,6 +70,20 @@ class WishService(
             TransactionUtil.afterCommit {
                 deleteFileQuietly(url)
             }
+        }
+    }
+
+    private fun syncToElasticsearch(wish: Wish) {
+        try {
+            wishElasticsearchRepository?.save(wishMapper.toDoc(wish))
+        } catch (e: Exception) {
+        }
+    }
+
+    private fun deleteFromElasticsearch(wishId: Long) {
+        try {
+            wishElasticsearchRepository?.deleteById(wishId)
+        } catch (e: Exception) {
         }
     }
 
@@ -119,6 +139,9 @@ class WishService(
 
         val saved = wishRepository.save(wish)
         wishEventPublisher?.publishWishCreated(saved)
+        TransactionUtil.afterCommit {
+            syncToElasticsearch(saved)
+        }
 
         return saved
     }
@@ -135,6 +158,9 @@ class WishService(
 
         wishRepository.deleteById(id)
         scheduleOldFileCleanup(wish.photoUrl)
+        TransactionUtil.afterCommit {
+            deleteFromElasticsearch(wish.id)
+        }
     }
 
     @Transactional
@@ -155,6 +181,9 @@ class WishService(
 
         val saved = wishRepository.save(wish)
         wishEventPublisher?.publishWishUpdated(saved)
+        TransactionUtil.afterCommit {
+            syncToElasticsearch(saved)
+        }
         return saved
     }
 
@@ -180,6 +209,57 @@ class WishService(
 
         val saved = wishRepository.save(wish)
         wishEventPublisher?.publishWishUpdated(saved)
+        TransactionUtil.afterCommit {
+            syncToElasticsearch(saved)
+        }
         return saved
+    }
+
+    fun search(query: String, pageable: Pageable): Page<Wish> {
+        val wishDocsPage = wishElasticsearchRepository?.searchByQuery(query, pageable)
+            ?: Page.empty(pageable)
+
+        val wishIds = wishDocsPage.content.map { it.id }
+        if (wishIds.isEmpty()) {
+            return Page.empty(pageable)
+        }
+
+        val wishes = wishRepository.findAllById(wishIds)
+        val wishesMap = wishes.associateBy { it.id }
+
+        val orderedWishes = wishIds.mapNotNull { wishesMap[it] }
+
+        return PageImpl(
+            orderedWishes,
+            pageable,
+            wishDocsPage.totalElements
+        )
+    }
+
+    @Transactional(readOnly = true)
+    fun reindexAllWishes() {
+        wishElasticsearchRepository?.let { esRepo ->
+            val wishes = wishRepository.findAll()
+            logger.info("Found ${wishes.size} wishes to reindex")
+            if (wishes.isEmpty()) {
+                logger.info("No wishes to reindex")
+                return
+            }
+            
+            wishes.forEach { wish ->
+                wish.user.id 
+            }
+            
+            val wishDocs = wishes.map { wishMapper.toDoc(it) }
+            logger.debug("Mapped ${wishDocs.size} wishes to WishDoc")
+            
+            wishDocs.chunked(100).forEachIndexed { index, batch ->
+                val saved = esRepo.saveAll(batch)
+                val savedList = saved.toList()
+                logger.debug("Indexed batch ${index + 1}: ${savedList.size} wishes")
+            }
+            
+            logger.info("Successfully indexed ${wishDocs.size} wishes")
+        } ?: logger.warn("Elasticsearch repository is not available, skipping reindex")
     }
 }
