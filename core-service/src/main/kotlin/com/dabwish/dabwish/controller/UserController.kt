@@ -3,6 +3,7 @@ package com.dabwish.dabwish.controller
 import com.dabwish.dabwish.generated.api.UsersApi
 import com.dabwish.dabwish.generated.dto.*
 import com.dabwish.dabwish.mapper.UserMapper
+import com.dabwish.dabwish.mapper.UserSubscriptionMapper
 import com.dabwish.dabwish.mapper.WishMapper
 import com.dabwish.dabwish.model.user.User
 import com.dabwish.dabwish.service.TelegramVerificationService
@@ -26,6 +27,7 @@ class UserController(
     private val wishMapper: WishMapper,
     private val telegramVerificationService: TelegramVerificationService,
     private val userSubscriptionService: UserSubscriptionService,
+    private val userSubscriptionMapper: UserSubscriptionMapper,
 ) : UsersApi{
 
     private fun getCurrentUserId(): Long {
@@ -164,11 +166,7 @@ class UserController(
     override fun subscribeToUser(userId: Long): ResponseEntity<SubscriptionResponse> {
         val subscriberId = getCurrentUserId()
         val subscription = userSubscriptionService.subscribe(subscriberId, userId)
-        val response = SubscriptionResponse(
-            subscriberId = subscription.subscriber.id,
-            subscribedToId = subscription.subscribedTo.id,
-            createdAt = subscription.createdAt
-        )
+        val response = userSubscriptionMapper.toResponse(subscription)
         return ResponseEntity.ok(response)
     }
 
