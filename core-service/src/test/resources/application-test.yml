@@ -18,6 +18,10 @@ spring:
       ddl-auto: create-drop
   liquibase:
     enabled: false
+  data:
+    elasticsearch:
+      repositories:
+        enabled: false
     
 app:
   kafka:
@@ -25,6 +29,9 @@ app:
   jwt:
     secret: Xtd5Fk7WIZS4tpwRMaqqTlaJBVkRpr3U
     expiration-seconds: 3600
+  elasticsearch:
+    enabled: false
+    auto-reindex: false
 
 server:
   port: 0
