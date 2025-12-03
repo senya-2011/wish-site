@@ -153,7 +153,6 @@ services:
       timeout: 3s
       retries: 5
 
-
   minio-init:
     image: minio/mc
     container_name: dabwish-minio-init
@@ -173,6 +172,15 @@ services:
       echo '*** MinIO init completed successfully ***';
       exit 0;
       "
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.2.2
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+    ports:
+      - "9200:9200"
+    networks:
+      - dev-net
 
 volumes:
   pgdata:
