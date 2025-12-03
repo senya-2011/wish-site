@@ -19,7 +19,7 @@ import { SearchIcon } from "@chakra-ui/icons";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import type { WishPageResponse } from "../../api";
+import type { WishPageResponse, WishResponse } from "../../api";
 import { wishesApi } from "../../lib/api-client";
 import { WishTable } from "./WishTable";
 import { UserSearchPage } from "../users/UserSearchPage";
@@ -56,7 +56,7 @@ export const SearchWishesPage = () => {
   const safePage = Math.min(Math.max(page, 1), totalPages);
   const items = wishesQuery.data?.items ?? [];
 
-  const handleSelect = (wish: any) => {
+  const handleSelect = (wish: WishResponse) => {
     navigate(`/wishes/${wish.wish_id}`);
   };
 

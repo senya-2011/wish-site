@@ -11,7 +11,7 @@ import {
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import type { WishPageResponse } from "../../api";
+import type { WishPageResponse, WishResponse } from "../../api";
 import { wishesApi, usersApi } from "../../lib/api-client";
 import { WishTable } from "../wishes/WishTable";
 
@@ -47,7 +47,7 @@ export const UserWishesPage = () => {
   const safePage = Math.min(Math.max(page, 1), totalPages);
   const items = wishesQuery.data?.items ?? [];
 
-  const handleSelect = (wish: any) => {
+  const handleSelect = (wish: WishResponse) => {
     navigate(`/wishes/${wish.wish_id}`);
   };
 

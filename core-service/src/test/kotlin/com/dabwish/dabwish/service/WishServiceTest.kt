@@ -37,7 +37,8 @@ class WishServiceTest {
         wishMapper,
         userRepository,
         eventPublisher,
-        minioService
+        minioService,
+        null
     )
 
     @BeforeEach
@@ -115,6 +116,7 @@ class WishServiceTest {
     @Test
     fun `delete removes entity`() {
         val wish = mockk<Wish>()
+        every { wish.id } returns 5L
         every { wish.photoUrl } returns "http://some-url/photo.jpg"
         every { minioService.extractObjectNameFromUrl("http://some-url/photo.jpg") } returns "photo.jpg"
         every { minioService.deleteFile("photo.jpg") } returns Unit

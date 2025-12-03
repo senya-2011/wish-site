@@ -80,10 +80,13 @@ export const WishDetailPage = () => {
         isClosable: true,
       });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
+      const errorMessage = error && typeof error === "object" && "response" in error
+        ? (error as { response?: { data?: { message?: string } } })?.response?.data?.message
+        : undefined;
       toast({
         title: "Ошибка",
-        description: error?.response?.data?.message || "Не удалось добавить желание",
+        description: errorMessage || "Не удалось добавить желание",
         status: "error",
         duration: 5000,
         isClosable: true,
@@ -127,10 +130,13 @@ export const WishDetailPage = () => {
         isClosable: true,
       });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
+      const errorMessage = error && typeof error === "object" && "response" in error
+        ? (error as { response?: { data?: { message?: string } } })?.response?.data?.message
+        : undefined;
       toast({
         title: "Ошибка",
-        description: error?.response?.data?.message || "Не удалось обновить желание",
+        description: errorMessage || "Не удалось обновить желание",
         status: "error",
         duration: 5000,
         isClosable: true,
@@ -155,10 +161,13 @@ export const WishDetailPage = () => {
       });
       navigate("/my-wishes");
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
+      const errorMessage = error && typeof error === "object" && "response" in error
+        ? (error as { response?: { data?: { message?: string } } })?.response?.data?.message
+        : undefined;
       toast({
         title: "Ошибка",
-        description: error?.response?.data?.message || "Не удалось удалить желание",
+        description: errorMessage || "Не удалось удалить желание",
         status: "error",
         duration: 5000,
         isClosable: true,
