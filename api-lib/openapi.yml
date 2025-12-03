@@ -186,6 +186,162 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
+  /users/telegram/verify:
+    post:
+      security:
+        - bearerAuth: []
+      summary: Запросить код верификации Telegram
+      description: Генерирует и отправляет код верификации для привязки Telegram аккаунта. Код отправляется через Telegram бот.
+      tags:
+        - Users
+      operationId: verifyTelegram
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TelegramVerificationRequest"
+      responses:
+        '200':
+          description: Код верификации успешно отправлен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TelegramVerificationResponse"
+        '400':
+          description: Ошибка валидации или Telegram уже привязан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '409':
+          description: Telegram username уже используется другим пользователем
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /users/telegram/confirm:
+    post:
+      security:
+        - bearerAuth: []
+      summary: Подтвердить код верификации Telegram
+      description: Подтверждает код верификации и привязывает Telegram username к аккаунту пользователя
+      tags:
+        - Users
+      operationId: confirmTelegram
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TelegramVerificationConfirmRequest"
+      responses:
+        '200':
+          description: Telegram успешно привязан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TelegramVerificationResponse"
+        '400':
+          description: Ошибка валидации, неверный или истекший код
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '404':
+          description: Код верификации не найден
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /users/{user_id}/subscribe:
+    parameters:
+      - name: user_id
+        in: path
+        required: true
+        description: Идентификатор пользователя, на которого подписываются
+        schema:
+          type: integer
+          format: int64
+    post:
+      security:
+        - bearerAuth: []
+      summary: Подписаться на пользователя
+      description: Подписывает текущего пользователя на указанного пользователя для получения уведомлений о новых желаниях
+      tags:
+        - Users
+      operationId: subscribeToUser
+      responses:
+        '200':
+          description: Успешно подписан на пользователя
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubscriptionResponse"
+        '400':
+          description: Ошибка валидации (нельзя подписаться на себя)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '404':
+          description: Пользователь не найден
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '409':
+          description: Уже подписан на этого пользователя
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    delete:
+      security:
+        - bearerAuth: []
+      summary: Отписаться от пользователя
+      description: Отписывает текущего пользователя от указанного пользователя
+      tags:
+        - Users
+      operationId: unsubscribeFromUser
+      responses:
+        '200':
+          description: Успешно отписан от пользователя
+        '404':
+          description: Пользователь не найден или подписка не существует
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /users/subscriptions:
+    get:
+      security:
+        - bearerAuth: []
+      summary: Получить мои подписки
+      description: Возвращает список пользователей, на которых подписан текущий пользователь
+      tags:
+        - Users
+      operationId: getMySubscriptions
+      responses:
+        '200':
+          description: Список подписок
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserResponse"
+        '400':
+          description: Ошибка
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
   # --- WISHES ---
 
 
@@ -637,6 +793,11 @@ components:
           enum:
             - admin
             - member
+        telegram_username:
+          type: string
+          nullable: true
+          description: Telegram username пользователя (если привязан)
+          example: "@username"
         created_at:
           type: string
           format: date-time
@@ -922,6 +1083,68 @@ components:
           type: string
           description: Имя объекта в MinIO bucket (можно использовать для удаления)
           example: "wishes/550e8400-e29b-41d4-a716-446655440000.jpg"
+
+    TelegramVerificationRequest:
+      type: object
+      required:
+        - telegram_username
+      properties:
+        telegram_username:
+          type: string
+          description: Telegram username (без @)
+          example: "username"
+          minLength: 1
+          maxLength: 32
+
+    TelegramVerificationConfirmRequest:
+      type: object
+      required:
+        - verification_code
+      properties:
+        verification_code:
+          type: string
+          description: Код верификации, полученный в Telegram боте
+          example: "123456"
+          minLength: 4
+          maxLength: 10
+
+    TelegramVerificationResponse:
+      type: object
+      required:
+        - success
+        - message
+      properties:
+        success:
+          type: boolean
+          description: Успешность операции
+          example: true
+        message:
+          type: string
+          description: Сообщение о результате операции
+          example: "Код верификации отправлен в Telegram бот"
+
+    SubscriptionResponse:
+      type: object
+      required:
+        - subscriber_id
+        - subscribed_to_id
+        - created_at
+      properties:
+        subscriber_id:
+          type: integer
+          format: int64
+          description: ID пользователя, который подписался
+          example: 1
+        subscribed_to_id:
+          type: integer
+          format: int64
+          description: ID пользователя, на которого подписались
+          example: 2
+        created_at:
+          type: string
+          format: date-time
+          description: Дата создания подписки
+          example: "2025-12-03T10:00:00+03:00"
 
     # --- COMMON ---
     Error:
