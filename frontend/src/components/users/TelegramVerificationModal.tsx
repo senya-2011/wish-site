@@ -22,6 +22,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useAuth } from "../../context/useAuth";
 import { useQueryClient } from "@tanstack/react-query";
 import { usersApi } from "../../lib/api-client";
+import { isAxiosError } from "axios";
 
 type TelegramVerificationModalProps = {
   isOpen: boolean;
@@ -135,7 +136,9 @@ export const TelegramVerificationModal = ({ isOpen, onClose, onSuccess }: Telegr
               {verifyMutation.isError && (
                 <Alert status="error">
                   <AlertIcon />
-                  {(verifyMutation.error as any)?.response?.data?.message || "Ошибка при отправке кода"}
+                  {isAxiosError(verifyMutation.error) && verifyMutation.error.response?.data?.message
+                    ? verifyMutation.error.response.data.message
+                    : "Ошибка при отправке кода"}
                 </Alert>
               )}
               {verifyMutation.isSuccess && (
@@ -178,7 +181,9 @@ export const TelegramVerificationModal = ({ isOpen, onClose, onSuccess }: Telegr
               {confirmMutation.isError && (
                 <Alert status="error">
                   <AlertIcon />
-                  {(confirmMutation.error as any)?.response?.data?.message || "Неверный код"}
+                  {isAxiosError(confirmMutation.error) && confirmMutation.error.response?.data?.message
+                    ? confirmMutation.error.response.data.message
+                    : "Неверный код"}
                 </Alert>
               )}
               <Button variant="ghost" size="sm" onClick={() => setStep("username")}>
