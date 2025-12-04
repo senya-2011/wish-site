@@ -44,7 +44,7 @@ class TelegramVerificationServiceTest {
     @Test
     fun `requestVerification generates code and saves it`() {
         every { userRepository.findById(1L) } returns Optional.of(user)
-        every { telegramVerificationCodeRepository.deleteByUserId(1L) } returns Unit
+        every { telegramVerificationCodeRepository.findByUserId(1L) } returns null
         every { telegramVerificationCodeRepository.save(any()) } answers { firstArg() }
         every { telegramEventPublisher.publishVerificationCode(any(), any(), any()) } returns Unit
 
@@ -59,7 +59,7 @@ class TelegramVerificationServiceTest {
     @Test
     fun `requestVerification normalizes username by removing @`() {
         every { userRepository.findById(1L) } returns Optional.of(user)
-        every { telegramVerificationCodeRepository.deleteByUserId(1L) } returns Unit
+        every { telegramVerificationCodeRepository.findByUserId(1L) } returns null
         every { telegramVerificationCodeRepository.save(any()) } answers { firstArg() }
         every { telegramEventPublisher.publishVerificationCode(any(), any(), any()) } returns Unit
 
