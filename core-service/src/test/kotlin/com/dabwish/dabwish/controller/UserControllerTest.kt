@@ -115,8 +115,9 @@ class UserControllerTest(
     //GetAllUsers
     @Test
     fun `getAllUsers return 200 and list of all users`(){
+        setupSecurityContext(user)
         every { userService.findAll() } returns users
-        every { userMapper.userListToUserResponseList(users, null) } returns responseUsers
+        every { userMapper.userListToUserResponseList(users, user.id) } returns responseUsers
 
         mockMvc.get("/api/users") {
             contentType = MediaType.APPLICATION_JSON
@@ -135,9 +136,9 @@ class UserControllerTest(
     //Get User By id
     @Test
     fun `get user by id return 200 when user exists`(){
-
+        setupSecurityContext(user)
         every { userService.findById(1) } returns user
-        every { userMapper.userToUserResponse(user, null) } returns userResponse
+        every { userMapper.userToUserResponse(user, user.id) } returns userResponse
 
         mockMvc.get("/api/users/${user.id}"){
             contentType = MediaType.APPLICATION_JSON
@@ -154,8 +155,9 @@ class UserControllerTest(
     //Post create user
     @Test
     fun `create new user return 200 and user`(){
+        setupSecurityContext(user)
         every { userService.create(userRequest) } returns user
-        every { userMapper.userToUserResponse(user, null) } returns userResponse
+        every { userMapper.userToUserResponse(user, user.id) } returns userResponse
 
         mockMvc.post("/api/users") {
             contentType = MediaType.APPLICATION_JSON
@@ -183,6 +185,7 @@ class UserControllerTest(
     // Update Name Test
     @Test
     fun `update user Name return 200 + updatedUser`(){
+        setupSecurityContext(user)
         val userUpdateRequest = UserUpdateRequest(name = "New name")
         val userForUpdate = User(id = 1, name = "New name", role = UserRole.MEMBER)
         val userUpdateResponse = UserResponse(
@@ -193,7 +196,7 @@ class UserControllerTest(
             )
 
         every { userService.update(userForUpdate.id, userUpdateRequest) } returns userForUpdate
-        every { userMapper.userToUserResponse(userForUpdate, null)} returns userUpdateResponse
+        every { userMapper.userToUserResponse(userForUpdate, user.id)} returns userUpdateResponse
 
         mockMvc.patch("/api/users/${userForUpdate.id}") {
             contentType = MediaType.APPLICATION_JSON
