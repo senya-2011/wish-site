@@ -22,7 +22,6 @@ class UserSubscriptionService(
     private val userSubscriptionRepository: UserSubscriptionRepository,
 ) {
     @Transactional
-    @CacheEvict(cacheNames = ["userSubscriptions"], key = "#subscriberId")
     fun subscribe(subscriberId: Long, subscribedToId: Long): UserSubscription {
         if (subscriberId == subscribedToId) {
             throw CannotSubscribeToSelfException()
@@ -45,7 +44,6 @@ class UserSubscriptionService(
     }
 
     @Transactional
-    @CacheEvict(cacheNames = ["userSubscriptions"], key = "#subscriberId")
     fun unsubscribe(subscriberId: Long, subscribedToId: Long) {
         if (!userSubscriptionRepository.existsBySubscriberIdAndSubscribedToId(subscriberId, subscribedToId)) {
             throw NotSubscribedException(subscriberId, subscribedToId)
@@ -72,10 +70,6 @@ class UserSubscriptionService(
         return subscriptions.map { it.subscribedTo }
     }
 
-    @Cacheable(
-        cacheNames = ["userSubscriptions"],
-        key = "#userId + ':' + #pageable.pageNumber + ':' + #pageable.pageSize + ':' + #pageable.sort.toString()",
-    )
     fun getSubscriptions(userId: Long, pageable: Pageable): Page<User> {
         if (!userRepository.existsById(userId)) {
             throw UserNotFoundException(userId)

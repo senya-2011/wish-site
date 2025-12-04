@@ -25,7 +25,6 @@ class UserService(
 ) {
     fun findAll(): List<User> = userRepository.findAll()
 
-    @Cacheable(cacheNames = ["usersById"], key = "#id")
     fun findById(id: Long): User {
         return userRepository.findById(id).
                 orElseThrow{ UserNotFoundException(id) }
@@ -33,7 +32,6 @@ class UserService(
 
     @Transactional
     @Caching(
-        put = [CachePut(cacheNames = ["usersById"], key = "#result.id")],
         evict = [CacheEvict(cacheNames = ["userSearch"], allEntries = true)],
     )
     fun create(userRequest: UserRequest): User {
@@ -46,7 +44,6 @@ class UserService(
     @Transactional
     @Caching(
         evict = [
-            CacheEvict(cacheNames = ["usersById"], key = "#id"),
             CacheEvict(cacheNames = ["userWishes"], allEntries = true),
             CacheEvict(cacheNames = ["userSearch"], allEntries = true),
         ],
@@ -58,7 +55,6 @@ class UserService(
 
     @Transactional
     @Caching(
-        put = [CachePut(cacheNames = ["usersById"], key = "#result.id")],
         evict = [CacheEvict(cacheNames = ["userSearch"], allEntries = true)],
     )
     fun update(id: Long, userUpdateRequest: UserUpdateRequest): User {
@@ -67,11 +63,21 @@ class UserService(
         return userRepository.save(user)
     }
 
-    @Cacheable(
-        cacheNames = ["userSearch"],
-        key = "#query + ':' + #pageable.pageNumber + ':' + #pageable.pageSize + ':' + #pageable.sort.toString()",
-    )
-    fun searchByName(query: String, pageable: Pageable): Page<User> {
-        return userRepository.findByNameContainingIgnoreCase(query, pageable)
+    fun searchByName(query: String, pageable: Pageable, excludeUserId: Long? = null): Page<User> {
+        val usersPage = userRepository.findByNameContainingIgnoreCase(query, pageable)
+        if (excludeUserId == null) {
+            return usersPage
+        }
+        val filteredContent = usersPage.content.filter { it.id != excludeUserId }
+        val adjustedTotal = if (filteredContent.size < usersPage.content.size) {
+            maxOf(0, usersPage.totalElements - 1)
+        } else {
+            usersPage.totalElements
+        }
+        return org.springframework.data.domain.PageImpl(
+            filteredContent,
+            pageable,
+            adjustedTotal
+        )
     }
 }

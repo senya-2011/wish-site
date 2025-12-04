@@ -31,5 +31,5 @@ class TelegramVerificationCodeInvalidException() : AppException("Invalid verific
 
 // Subscriptions
 class CannotSubscribeToSelfException() : AppException("Cannot subscribe to yourself")
-class AlreadySubscribedException(subscriberId: Long, subscribedToId: Long) : AppException("User $subscriberId is already subscribed to user $subscribedToId")
+class AlreadySubscribedException(subscriberId: Long, subscribedToId: Long) : AppException("You are already subscribed to it")
 class NotSubscribedException(subscriberId: Long, subscribedToId: Long) : AppException("User $subscriberId is not subscribed to user $subscribedToId")

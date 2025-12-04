@@ -237,7 +237,7 @@ class WishService(
         return saved
     }
 
-    fun search(query: String, pageable: Pageable): Page<Wish> {
+    fun search(query: String, pageable: Pageable, excludeUserId: Long? = null): Page<Wish> {
         val wishDocsPage = wishElasticsearchRepository?.searchByQuery(query, pageable)
             ?: Page.empty(pageable)
 
@@ -250,11 +250,18 @@ class WishService(
         val wishesMap = wishes.associateBy { it.id }
 
         val orderedWishes = wishIds.mapNotNull { wishesMap[it] }
+            .filter { excludeUserId == null || it.user.id != excludeUserId }
+
+        val adjustedTotal = if (excludeUserId != null && orderedWishes.size < wishIds.size) {
+            maxOf(0, wishDocsPage.totalElements - 1)
+        } else {
+            wishDocsPage.totalElements
+        }
 
         return PageImpl(
             orderedWishes,
             pageable,
-            wishDocsPage.totalElements
+            adjustedTotal
         )
     }
 

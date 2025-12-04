@@ -116,7 +116,7 @@ class UserControllerTest(
     @Test
     fun `getAllUsers return 200 and list of all users`(){
         every { userService.findAll() } returns users
-        every { userMapper.userListToUserResponseList(users) } returns responseUsers
+        every { userMapper.userListToUserResponseList(users, null) } returns responseUsers
 
         mockMvc.get("/api/users") {
             contentType = MediaType.APPLICATION_JSON
@@ -137,7 +137,7 @@ class UserControllerTest(
     fun `get user by id return 200 when user exists`(){
 
         every { userService.findById(1) } returns user
-        every { userMapper.userToUserResponse(user) } returns userResponse
+        every { userMapper.userToUserResponse(user, null) } returns userResponse
 
         mockMvc.get("/api/users/${user.id}"){
             contentType = MediaType.APPLICATION_JSON
@@ -155,7 +155,7 @@ class UserControllerTest(
     @Test
     fun `create new user return 200 and user`(){
         every { userService.create(userRequest) } returns user
-        every { userMapper.userToUserResponse(user) } returns userResponse
+        every { userMapper.userToUserResponse(user, null) } returns userResponse
 
         mockMvc.post("/api/users") {
             contentType = MediaType.APPLICATION_JSON
@@ -193,7 +193,7 @@ class UserControllerTest(
             )
 
         every { userService.update(userForUpdate.id, userUpdateRequest) } returns userForUpdate
-        every { userMapper.userToUserResponse(userForUpdate)} returns userUpdateResponse
+        every { userMapper.userToUserResponse(userForUpdate, null)} returns userUpdateResponse
 
         mockMvc.patch("/api/users/${userForUpdate.id}") {
             contentType = MediaType.APPLICATION_JSON
@@ -404,7 +404,7 @@ class UserControllerTest(
         val subscriptionsPage = org.springframework.data.domain.PageImpl(subscriptions, pageable, 1)
 
         every { userSubscriptionService.getSubscriptions(1L, any()) } returns subscriptionsPage
-        every { userMapper.userListToUserResponseList(subscriptions) } returns subscriptionsResponse
+        every { userMapper.userListToUserResponseList(subscriptions, 1L) } returns subscriptionsResponse
 
         mockMvc.get("/api/users/subscriptions?page=0&size=10") {
             contentType = MediaType.APPLICATION_JSON

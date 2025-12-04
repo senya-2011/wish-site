@@ -11,9 +11,10 @@ import {
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import type { WishPageResponse, WishResponse } from "../../api";
+import type { WishPageResponse, WishResponse, UserPageResponse } from "../../api";
 import { wishesApi, usersApi } from "../../lib/api-client";
 import { WishTable } from "../wishes/WishTable";
+import { SubscribeButton } from "./SubscribeButton";
 
 const PAGE_SIZE = 10;
 
@@ -32,6 +33,14 @@ export const UserWishesPage = () => {
     enabled: Boolean(userId),
   });
 
+  const subscriptionsQuery = useQuery<UserPageResponse>({
+    queryKey: ["user-subscriptions"],
+    queryFn: async () => {
+      const response = await usersApi.getMySubscriptions(0, 50);
+      return response.data;
+    },
+  });
+
   const wishesQuery = useQuery<WishPageResponse>({
     queryKey: ["user-wishes", userId, page],
     queryFn: async () => {
@@ -42,6 +51,9 @@ export const UserWishesPage = () => {
     enabled: Boolean(userId),
     placeholderData: keepPreviousData,
   });
+
+  const subscribedUserIds = new Set(subscriptionsQuery.data?.items?.map((u) => u.user_id) || []);
+  const isSubscribed = userId ? subscribedUserIds.has(Number(userId)) : false;
 
   const totalPages = Math.max(1, wishesQuery.data?.total_pages ?? 1);
   const safePage = Math.min(Math.max(page, 1), totalPages);
@@ -60,9 +72,12 @@ export const UserWishesPage = () => {
               Желания пользователя: {userQuery.isLoading ? <Spinner size="sm" ml={2} /> : userQuery.data?.name || "Загрузка..."}
             </Heading>
           </Box>
-          <Button variant="ghost" onClick={() => navigate(-1)}>
-            ← Назад
-          </Button>
+          <Flex gap={2} align="center">
+            {userId && <SubscribeButton userId={Number(userId)} isSubscribed={isSubscribed} />}
+            <Button variant="ghost" onClick={() => navigate(-1)}>
+              ← Назад
+            </Button>
+          </Flex>
         </Flex>
       </CardHeader>
       <CardBody>

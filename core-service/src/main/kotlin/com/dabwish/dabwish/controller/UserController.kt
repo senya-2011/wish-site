@@ -39,22 +39,25 @@ class UserController(
 
     // GET
     override fun getAllUsers(): ResponseEntity<List<UserResponse>> {
+        val currentUserId = getCurrentUserId()
         val users = userService.findAll()
-        val response = userMapper.userListToUserResponseList(users)
+        val response = userMapper.userListToUserResponseList(users, currentUserId)
         return ResponseEntity.ok(response)
     }
 
     override fun getUserById(userId: Long): ResponseEntity<UserResponse> {
+        val currentUserId = getCurrentUserId()
         val user = userService.findById(userId)
-        val userResponse = userMapper.userToUserResponse(user)
+        val userResponse = userMapper.userToUserResponse(user, currentUserId)
         return ResponseEntity.ok(userResponse)
     }
 
     // POST
     @PreAuthorize("hasRole('ADMIN')")
     override fun createUser(userRequest: UserRequest): ResponseEntity<UserResponse> {
+        val currentUserId = getCurrentUserId()
         val user = userService.create(userRequest)
-        val userResponse = userMapper.userToUserResponse(user)
+        val userResponse = userMapper.userToUserResponse(user, currentUserId)
         return ResponseEntity.ok(userResponse)
     }
 
@@ -71,8 +74,9 @@ class UserController(
         userId: Long,
         userUpdateRequest: UserUpdateRequest
     ): ResponseEntity<UserResponse> {
+        val currentUserId = getCurrentUserId()
         val user = userService.update(userId,userUpdateRequest)
-        val userResponse = userMapper.userToUserResponse(user)
+        val userResponse = userMapper.userToUserResponse(user, currentUserId)
         return ResponseEntity.ok(userResponse)
     }
 
@@ -127,12 +131,13 @@ class UserController(
         page: Int,
         size: Int
     ): ResponseEntity<UserPageResponse> {
+        val currentUserId = getCurrentUserId()
         val pageNumber = page.coerceAtLeast(0)
         val pageSize = size.coerceIn(1, 50)
         val pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.ASC, "name"))
-        val usersPage = userService.searchByName(query, pageable)
+        val usersPage = userService.searchByName(query, pageable, currentUserId)
         val dto = UserPageResponse(
-            items = userMapper.userListToUserResponseList(usersPage.content),
+            items = userMapper.userListToUserResponseList(usersPage.content, currentUserId),
             page = usersPage.number,
             propertySize = usersPage.size,
             totalElements = usersPage.totalElements,
@@ -183,7 +188,7 @@ class UserController(
         val pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, "createdAt"))
         val usersPage = userSubscriptionService.getSubscriptions(userId, pageable)
         val dto = UserPageResponse(
-            items = userMapper.userListToUserResponseList(usersPage.content),
+            items = userMapper.userListToUserResponseList(usersPage.content, userId),
             page = usersPage.number,
             propertySize = usersPage.size,
             totalElements = usersPage.totalElements,
