@@ -9,3 +9,5 @@ databaseChangeLog:
       file: db/changelog/changeset/004-create-user-subscriptions.yml
   - include:
       file: db/changelog/changeset/005-create-telegram-verification-codes.yml
+  - include:
+      file: db/changelog/changeset/006-create-telegram-chat-links.yml
