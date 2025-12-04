@@ -14,6 +14,7 @@ import {
   InputGroup,
   InputRightElement,
   IconButton,
+  Link,
 } from "@chakra-ui/react";
 import { ArrowForwardIcon } from "@chakra-ui/icons";
 import { useState } from "react";
@@ -58,13 +59,22 @@ export const TelegramVerificationModal = ({ isOpen, onClose, onSuccess }: Telegr
         verification_code: code,
       }),
     onSuccess: async () => {
-      queryClient.invalidateQueries({ queryKey: ["user", user?.user_id] });
-      queryClient.invalidateQueries({ queryKey: ["auth"] });
-      if (refreshUser) {
-        await refreshUser();
+      onClose();
+      
+      try {
+        queryClient.invalidateQueries({ queryKey: ["user", user?.user_id] });
+        queryClient.invalidateQueries({ queryKey: ["auth"] });
+        if (refreshUser) {
+          await refreshUser();
+        }
+        onSuccess?.();
+      } catch (error) {
+        console.error("Error refreshing user after Telegram confirmation:", error);
       }
-      onSuccess?.();
-      handleClose();
+      
+      setStep("username");
+      setTelegramUsername("");
+      setVerificationCode("");
     },
     onError: (error: unknown) => {
       console.error("Confirm error:", error);
@@ -125,7 +135,7 @@ export const TelegramVerificationModal = ({ isOpen, onClose, onSuccess }: Telegr
               {verifyMutation.isError && (
                 <Alert status="error">
                   <AlertIcon />
-                  {verifyMutation.error?.response?.data?.message || "Ошибка при отправке кода"}
+                  {(verifyMutation.error as any)?.response?.data?.message || "Ошибка при отправке кода"}
                 </Alert>
               )}
               {verifyMutation.isSuccess && (
@@ -137,7 +147,13 @@ export const TelegramVerificationModal = ({ isOpen, onClose, onSuccess }: Telegr
             </VStack>
           ) : (
             <VStack spacing={4} align="stretch">
-              <Text>Введите код, который вы получили в Telegram боте:</Text>
+              <Text>
+                Введите код из{" "}
+                <Link href="https://t.me/dabwish_bot" isExternal color="blue.500">
+                  t.me/dabwish_bot
+                </Link>
+                :
+              </Text>
               <form onSubmit={handleCodeSubmit}>
                 <InputGroup>
                   <Input
@@ -162,7 +178,7 @@ export const TelegramVerificationModal = ({ isOpen, onClose, onSuccess }: Telegr
               {confirmMutation.isError && (
                 <Alert status="error">
                   <AlertIcon />
-                  {confirmMutation.error?.response?.data?.message || "Неверный код"}
+                  {(confirmMutation.error as any)?.response?.data?.message || "Неверный код"}
                 </Alert>
               )}
               <Button variant="ghost" size="sm" onClick={() => setStep("username")}>

@@ -41,3 +41,5 @@ app:
   telegram:
     bot-username: ${TELEGRAM_BOT_USERNAME:dabwish_bot}
     bot-token: ${TELEGRAM_BOT_TOKEN}
+  frontend:
+    base-url: ${FRONTEND_BASE_URL:http://localhost:5173}
