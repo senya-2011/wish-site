@@ -38,17 +38,23 @@ class TelegramVerificationService(
         val normalizedUsername = telegramUsername.removePrefix("@").trim()
 
         val verificationCode = generateVerificationCode()
-
-        telegramVerificationCodeRepository.deleteByUserId(userId)
-
         val expiresAt = OffsetDateTime.now().plusMinutes(codeExpirationMinutes)
-        val codeEntity = TelegramVerificationCode(
-            user = user,
-            telegramUsername = normalizedUsername,
-            verificationCode = verificationCode,
-            expiresAt = expiresAt,
-        )
-        telegramVerificationCodeRepository.save(codeEntity)
+
+        val existing = telegramVerificationCodeRepository.findByUserId(userId)
+        if (existing != null) {
+            existing.telegramUsername = normalizedUsername
+            existing.verificationCode = verificationCode
+            existing.expiresAt = expiresAt
+            telegramVerificationCodeRepository.save(existing)
+        } else {
+            val codeEntity = TelegramVerificationCode(
+                user = user,
+                telegramUsername = normalizedUsername,
+                verificationCode = verificationCode,
+                expiresAt = expiresAt,
+            )
+            telegramVerificationCodeRepository.save(codeEntity)
+        }
 
         telegramEventPublisher?.publishVerificationCode(userId, normalizedUsername, verificationCode)
 
