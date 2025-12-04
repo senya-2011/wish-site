@@ -21,11 +21,12 @@ class TelegramChatLink(
     var userId: Long? = null,
 
     @Column(name = "telegram_username", nullable = false, unique = true, length = 255)
-    var telegramUsername: String,
+    var telegramUsername: String = "",
 
     @Column(name = "chat_id", nullable = false)
-    var chatId: Long,
+    var chatId: Long = 0,
 ): Serializable {
+    constructor() : this(null, null, "", 0)
     final override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other == null) return false
