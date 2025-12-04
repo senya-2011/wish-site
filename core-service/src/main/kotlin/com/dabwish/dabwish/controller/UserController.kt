@@ -6,6 +6,7 @@ import com.dabwish.dabwish.mapper.UserMapper
 import com.dabwish.dabwish.mapper.UserSubscriptionMapper
 import com.dabwish.dabwish.mapper.WishMapper
 import com.dabwish.dabwish.model.user.User
+import com.dabwish.dabwish.service.MinioService
 import com.dabwish.dabwish.service.TelegramVerificationService
 import com.dabwish.dabwish.service.UserService
 import com.dabwish.dabwish.service.UserSubscriptionService
@@ -28,6 +29,7 @@ class UserController(
     private val telegramVerificationService: TelegramVerificationService,
     private val userSubscriptionService: UserSubscriptionService,
     private val userSubscriptionMapper: UserSubscriptionMapper,
+    private val minioService: MinioService,
 ) : UsersApi{
 
     private fun getCurrentUserId(): Long {
@@ -86,7 +88,7 @@ class UserController(
         wishRequest: WishRequest
     ): ResponseEntity<WishResponse> {
         val wish = wishService.create(userId, wishRequest)
-        val wishResponse = wishMapper.toResponse(wish)
+        val wishResponse = toPublicUrl(wishMapper.toResponse(wish))
         return ResponseEntity.ok(wishResponse)
     }
 
@@ -107,7 +109,7 @@ class UserController(
         )
         
         val wish = wishService.createWithFile(userId, wishRequest, photo)
-        val wishResponse = wishMapper.toResponse(wish)
+        val wishResponse = toPublicUrl(wishMapper.toResponse(wish))
         return ResponseEntity.ok(wishResponse)
     }
 
@@ -117,7 +119,7 @@ class UserController(
         val pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, "createdAt"))
         val wishesPage = wishService.findAllByUserId(userId, pageable)
         val dto = WishPageResponse(
-            items = wishMapper.toResponseList(wishesPage.content),
+            items = wishMapper.toResponseList(wishesPage.content).map { toPublicUrl(it) },
             page = wishesPage.number,
             propertySize = wishesPage.size,
             totalElements = wishesPage.totalElements,
@@ -196,4 +198,7 @@ class UserController(
         )
         return ResponseEntity.ok(dto)
     }
+
+    private fun toPublicUrl(dto: WishResponse): WishResponse =
+        dto.copy(photoUrl = minioService.toPublicUrl(dto.photoUrl))
 }

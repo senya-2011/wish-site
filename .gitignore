@@ -38,3 +38,7 @@ out/
 
 ### Kotlin ###
 .kotlin
+
+### Docker Artifacts ###
+docker/artifacts/*
+!docker/artifacts/.gitkeep

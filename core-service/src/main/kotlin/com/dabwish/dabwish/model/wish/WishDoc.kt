@@ -8,7 +8,7 @@ import org.springframework.data.elasticsearch.annotations.Setting
 import java.math.BigDecimal
 import java.time.OffsetDateTime
 
-@Document(indexName = "wishes")
+@Document(indexName = "wishes", createIndex = false)
 @Setting(settingPath = "/elasticsearch/wishes-settings.json")
 data class WishDoc(
     @Id
