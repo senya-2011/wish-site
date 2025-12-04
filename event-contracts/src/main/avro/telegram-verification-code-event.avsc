@@ -1,0 +1,24 @@
+{
+  "type" : "record",
+  "name" : "TelegramVerificationCodeEvent",
+  "namespace" : "com.dabwish.events.telegram",
+  "doc" : "Event emitted when a Telegram verification code is generated and needs to be sent to the user.",
+  "fields" : [
+    {
+      "name" : "userId",
+      "type" : "long",
+      "doc" : "ID of the user requesting verification."
+    },
+    {
+      "name" : "telegramUsername",
+      "type" : "string",
+      "doc" : "Telegram username to verify."
+    },
+    {
+      "name" : "verificationCode",
+      "type" : "string",
+      "doc" : "Verification code to send to the user via Telegram bot."
+    }
+  ]
+}
+

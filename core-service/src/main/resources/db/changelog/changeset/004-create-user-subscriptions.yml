@@ -1,0 +1,58 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-user-subscriptions-table-v1
+      author: Arsenii Alhimovici
+      changes:
+        - createTable:
+            tableName: user_subscriptions
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+
+              - column:
+                  name: subscriber_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_user_subscriptions_subscriber
+                    references: users(id)
+
+              - column:
+                  name: subscribed_to_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_user_subscriptions_subscribed_to
+                    references: users(id)
+
+              - column:
+                  name: created_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+
+        - addUniqueConstraint:
+            tableName: user_subscriptions
+            columnNames: subscriber_id, subscribed_to_id
+            constraintName: uk_user_subscriptions_subscriber_subscribed
+
+        - createIndex:
+            indexName: idx_user_subscriptions_subscriber
+            tableName: user_subscriptions
+            columns:
+              - column:
+                  name: subscriber_id
+
+        - createIndex:
+            indexName: idx_user_subscriptions_subscribed_to
+            tableName: user_subscriptions
+            columns:
+              - column:
+                  name: subscribed_to_id
+

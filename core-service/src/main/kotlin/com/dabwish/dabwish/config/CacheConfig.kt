@@ -178,7 +178,6 @@ class CacheConfig(
             .serializeValuesWith(pagePair)
             .entryTtl(Duration.ofSeconds(wishListTtlSeconds))
 
-        val usersCache = defaultConfig.entryTtl(Duration.ofSeconds(usersTtlSeconds))
         val wishesCache = RedisCacheConfiguration.defaultCacheConfig()
             .serializeValuesWith(wishPair)
             .entryTtl(Duration.ofSeconds(wishesTtlSeconds))
@@ -187,7 +186,6 @@ class CacheConfig(
             .cacheDefaults(defaultConfig)
             .withInitialCacheConfigurations(
                 mapOf(
-                    "usersById" to usersCache,
                     "wishesById" to wishesCache,
                     "userWishes" to defaultConfig,
                     "userSearch" to defaultConfig,

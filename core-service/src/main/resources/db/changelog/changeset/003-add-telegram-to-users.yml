@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-telegram-username-to-users-v1
+      author: Arsenii Alhimovici
+      changes:
+        - addColumn:
+            tableName: users
+            columns:
+              - column:
+                  name: telegram_username
+                  type: varchar(255)
+                  constraints:
+                    nullable: true
+

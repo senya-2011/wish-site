@@ -1,6 +1,7 @@
 package com.wish_notification.notification_service.kafka
 
 import com.dabwish.events.wish.WishCreatedEvent
+import com.dabwish.events.wish.WishNotificationEvent
 import com.dabwish.events.wish.WishUpdatedEvent
 import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
@@ -38,6 +39,19 @@ class WishEventListener {
             event.title ?: "-",
             event.price ?: "-",
             event.updatedAt
+        )
+    }
+
+    @KafkaListener(
+        topics = ["\${app.kafka.topics.wish-notification:wish-notification-events}"],
+    )
+    fun handleWishNotification(event: WishNotificationEvent) {
+        log.info(
+            "Уведомление для @{}: пользователь {} создал новое желание '{}' [Wish ID: {}]",
+            event.subscriberTelegramUsername,
+            event.ownerName,
+            event.wishTitle,
+            event.wishId
         )
     }
 }
