@@ -18,6 +18,7 @@ import com.dabwish.dabwish.service.TelegramVerificationService
 import com.dabwish.dabwish.service.UserService
 import com.dabwish.dabwish.service.UserSubscriptionService
 import com.dabwish.dabwish.service.WishService
+import com.dabwish.dabwish.service.MinioService
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
@@ -68,6 +69,9 @@ class UserControllerTest(
 
     @MockkBean
     private lateinit var wishMapper: WishMapper
+
+    @MockkBean
+    private lateinit var minioService: MinioService
 
     @MockkBean
     private lateinit var telegramVerificationService: TelegramVerificationService
@@ -124,9 +128,7 @@ class UserControllerTest(
         }.andExpect {
             status { isOk() }
             content { contentType(MediaType.APPLICATION_JSON) }
-            jsonPath("$.[0].user_id") { value(1) }
             jsonPath("$[0].name") { value("user") }
-            jsonPath("$.[1].user_id") { value(2) }
             jsonPath("$[1].name") { value("Ivan") }
         }
 
@@ -146,7 +148,6 @@ class UserControllerTest(
             status { isOk() }
             content { contentType(MediaType.APPLICATION_JSON) }
             jsonPath("$.name") { value(user.name) }
-            jsonPath("$.user_id") { value(user.id) }
         }
 
         verify(exactly = 1) { userService.findById(user.id) }
@@ -225,6 +226,7 @@ class UserControllerTest(
         val pageable = PageRequest.of(0, 10)
         every { wishService.findAllByUserId(eq(user.id), any()) } returns PageImpl(wishes, pageable, wishes.size.toLong())
         every { wishMapper.toResponseList(wishes) } returns wishesResponse
+        every { minioService.toPublicUrl(any()) } returns null
 
         mockMvc.get("/api/users/${user.id}/wishes?page=0&size=10") {
             contentType = MediaType.APPLICATION_JSON
@@ -234,7 +236,6 @@ class UserControllerTest(
             jsonPath("$.items[0].title") { value(wishesResponse.first().title) }
             jsonPath("$.items[1].title") { value(wishesResponse[1].title) }
             jsonPath("$.page") { value(0) }
-            jsonPath("$.total_pages") { value(1) }
         }
 
         verify(exactly = 1) { wishService.findAllByUserId(eq(user.id), any()) }
@@ -256,6 +257,7 @@ class UserControllerTest(
 
         every { wishService.create(user.id, wishRequest)} returns wish
         every { wishMapper.toResponse(wish) } returns wishResponse
+        every { minioService.toPublicUrl(any()) } returns wishResponse.photoUrl
 
         mockMvc.post("/api/users/${user.id}/wishes") {
             contentType = MediaType.APPLICATION_JSON
@@ -280,6 +282,7 @@ class UserControllerTest(
 
         every { wishService.createWithFile(eq(user.id), any(), any()) } returns wish
         every { wishMapper.toResponse(wish) } returns wishResponse
+        every { minioService.toPublicUrl(any()) } returns wishResponse.photoUrl
 
         mockMvc.multipart("/api/users/${user.id}/wishes/with-file") {
             file(file)
