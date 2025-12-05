@@ -1,4 +1,6 @@
 spring:
+  cache:
+    type: none
   kafka:
     bootstrap-servers: localhost:9094
     properties:

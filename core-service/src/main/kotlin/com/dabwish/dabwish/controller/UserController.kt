@@ -11,11 +11,16 @@ import com.dabwish.dabwish.mapper.UserMapper
 import com.dabwish.dabwish.mapper.WishMapper
 import com.dabwish.dabwish.service.UserService
 import com.dabwish.dabwish.service.WishService
+import com.dabwish.dabwish.util.FileValidator
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.core.io.Resource
+import org.springframework.http.HttpStatus
+import org.springframework.web.multipart.MultipartFile
 
 @RestController
 class UserController(
@@ -70,6 +75,27 @@ class UserController(
         wishRequest: WishRequest
     ): ResponseEntity<WishResponse> {
         val wish = wishService.create(userId, wishRequest)
+        val wishResponse = wishMapper.toResponse(wish)
+        return ResponseEntity.ok(wishResponse)
+    }
+
+    override fun createWishWithFile(
+        userId: Long,
+        title: String,
+        description: String?,
+        photo: MultipartFile?,
+        price: Double?
+    ): ResponseEntity<WishResponse> {
+        photo?.let { FileValidator.validateImage(it) }
+
+        val wishRequest = WishRequest(
+            title = title,
+            description = description,
+            photoUrl = null,
+            price = price
+        )
+        
+        val wish = wishService.createWithFile(userId, wishRequest, photo)
         val wishResponse = wishMapper.toResponse(wish)
         return ResponseEntity.ok(wishResponse)
     }

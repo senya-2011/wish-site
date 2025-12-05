@@ -16,3 +16,10 @@ class MissingCreatedAtException(userId: Long) :
 
 // Wishes
 class WishNotFoundException(id: Long) : AppException("Wish with id:$id not found")
+
+// MinIO
+class FileStorageException(message: String, cause: Throwable? = null) : RuntimeException(message, cause)
+
+class InvalidFileFormatException(): AppException("Only images (JPEG, PNG, WEBP) are allowed")
+
+class FileSizeLimitExceededException(): AppException("File size exceeds 10MB limit")

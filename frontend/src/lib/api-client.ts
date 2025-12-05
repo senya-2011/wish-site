@@ -1,4 +1,4 @@
-import { Configuration, UsersApi, WishesApi, AuthApi } from "../api";
+import { Configuration, UsersApi, WishesApi, AuthApi, FilesApi } from "../api";
 import axios from "axios";
 
 const basePath = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080/api";
@@ -35,3 +35,4 @@ axiosInstance.interceptors.response.use(
 export const authApi = new AuthApi(apiConfig, basePath, axiosInstance);
 export const usersApi = new UsersApi(apiConfig, basePath, axiosInstance);
 export const wishesApi = new WishesApi(apiConfig, basePath, axiosInstance);
+export const filesApi = new FilesApi(apiConfig, basePath, axiosInstance);

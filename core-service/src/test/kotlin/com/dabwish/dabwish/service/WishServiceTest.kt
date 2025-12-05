@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
+import org.springframework.web.multipart.MultipartFile
 import java.util.*
 
 class WishServiceTest {
@@ -29,17 +30,18 @@ class WishServiceTest {
     private val wishMapper = mockk<WishMapper>(relaxUnitFun = true)
     private val userRepository = mockk<UserRepository>()
     private val eventPublisher = mockk<WishEventPublisher>(relaxed = true)
+    private val minioService = mockk<MinioService>()
 
     private val service = WishService(
         wishRepository,
         wishMapper,
         userRepository,
-        eventPublisher
+        eventPublisher,
+        minioService
     )
 
     @BeforeEach
     fun setUp() {
-        // Очистка моков перед каждым тестом (опционально, но хорошая практика)
     }
 
     @Test
@@ -99,6 +101,7 @@ class WishServiceTest {
         every { userRepository.findById(1L) } returns Optional.of(user)
         every { wishMapper.toEntity(request, user) } returns wish
         every { wishRepository.save(wish) } returns wish
+        every { request.photoUrl } returns null
 
         val result = service.create(1L, request)
 
@@ -111,40 +114,115 @@ class WishServiceTest {
 
     @Test
     fun `delete removes entity`() {
-        every { wishRepository.existsById(5L) } returns true
+        val wish = mockk<Wish>()
+        every { wish.photoUrl } returns "http://some-url/photo.jpg"
+        every { minioService.extractObjectNameFromUrl("http://some-url/photo.jpg") } returns "photo.jpg"
+        every { minioService.deleteFile("photo.jpg") } returns Unit
+        every { wishRepository.findById(5L) } returns Optional.of(wish)
         every { wishRepository.deleteById(5L) } just Runs
+        every { wishRepository.countByPhotoUrl("http://some-url/photo.jpg")} returns 1L
 
         service.delete(5L)
 
-        verify(exactly = 1) { wishRepository.existsById(5L) }
+        verify(exactly = 1) { wishRepository.findById(5L) }
         verify(exactly = 1) { wishRepository.deleteById(5L) }
+        verify(exactly = 1) { minioService.deleteFile("photo.jpg") }
     }
 
     @Test
     fun `delete throws if wish not found`() {
-        every { wishRepository.existsById(5L) } returns false
+        every { wishRepository.findById(5L) } returns Optional.empty()
 
-        assertThrows<WishNotFoundException> { 
-            service.delete(5L) 
+        assertThrows<WishNotFoundException> {
+            service.delete(5L)
         }
 
-        verify(exactly = 1) { wishRepository.existsById(5L) }
+        verify(exactly = 1) { wishRepository.findById(5L) }
         verify(exactly = 0) { wishRepository.deleteById(any()) }
     }
 
     @Test
     fun `update modifies wish and publishes event`() {
-        val request = mockk<WishUpdateRequest>()
-        val wish = mockk<Wish>()
+        val request = mockk<WishUpdateRequest>(relaxed = true)
+        val testUrl = "http://some-url/photo.jpg"
+        val testObjectName = "photo.jpg"
+
+        val wish = mockk<Wish>(relaxed = true) {
+            every { photoUrl } returns testUrl
+        }
 
         every { wishRepository.findById(2L) } returns Optional.of(wish)
         every { wishRepository.save(wish) } returns wish
+        every { wishRepository.countByPhotoUrl(testUrl) } returns 1L
+        every { minioService.extractObjectNameFromUrl(testUrl) } returns testObjectName
+        every { minioService.deleteFile(testObjectName) } just Runs
 
         val result = service.update(2L, request)
 
         assertEquals(wish, result)
         verify(exactly = 1) { wishRepository.findById(2L) }
         verify(exactly = 1) { wishMapper.updateEntityFromRequest(request, wish) }
+        verify(exactly = 1) { wishRepository.save(wish) }
+        verify(exactly = 1) { eventPublisher.publishWishUpdated(wish) }
+    }
+
+    @Test
+    fun `createWithFile uploads file and saves wish`() {
+        val request = mockk<WishRequest>(relaxed = true)
+        val user = mockk<User>()
+        val wish = mockk<Wish>(relaxed = true)
+        val file = mockk<MultipartFile>()
+        val expectedUrl = "http://minio/new-photo.jpg"
+
+        every { userRepository.findById(1L) } returns Optional.of(user)
+        every { file.isEmpty } returns false
+        every { minioService.uploadFile(file, "wishes/") } returns "new-photo.jpg"
+        every { minioService.getFileUrl("new-photo.jpg") } returns expectedUrl
+
+        every { wishMapper.toEntity(request, user) } returns wish
+        every { wishRepository.save(wish) } returns wish
+
+        val result = service.createWithFile(1L, request, file)
+
+        assertEquals(wish, result)
+
+        verify(exactly = 1) { minioService.uploadFile(file, "wishes/") }
+        verify(exactly = 1) { wish.photoUrl = expectedUrl }
+        verify(exactly = 1) { wishRepository.save(wish) }
+        verify(exactly = 1) { eventPublisher.publishWishCreated(wish) }
+    }
+
+    @Test
+    fun `updateWithFile uploads new file, updates wish and removes old file`() {
+        val request = mockk<WishUpdateRequest>(relaxed = true)
+        val file = mockk<MultipartFile>()
+        val oldUrl = "http://minio/old.jpg"
+        val newUrl = "http://minio/new.jpg"
+        val oldObjectName = "old.jpg"
+
+        val wish = mockk<Wish>(relaxed = true)
+        every { wish.photoUrl } returns oldUrl
+
+        every { wishRepository.findById(10L) } returns Optional.of(wish)
+        every { file.isEmpty } returns false
+
+        every { minioService.uploadFile(file, "wishes/") } returns "new.jpg"
+        every { minioService.getFileUrl("new.jpg") } returns newUrl
+
+        every { wishRepository.countByPhotoUrl(oldUrl) } returns 1L
+        every { minioService.extractObjectNameFromUrl(oldUrl) } returns oldObjectName
+        every { minioService.deleteFile(oldObjectName) } just Runs
+
+        every { wishRepository.save(wish) } returns wish
+
+        val result = service.updateWithFile(10L, request, file)
+
+        assertEquals(wish, result)
+
+        verify(exactly = 1) { minioService.uploadFile(file, "wishes/") }
+        verify(exactly = 1) { wishMapper.updateEntityFromRequest(request, wish) }
+        verify(exactly = 1) { wish.photoUrl = newUrl }
+        verify(exactly = 1) { minioService.deleteFile(oldObjectName) }
         verify(exactly = 1) { wishRepository.save(wish) }
         verify(exactly = 1) { eventPublisher.publishWishUpdated(wish) }
     }

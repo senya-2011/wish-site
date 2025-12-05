@@ -26,9 +26,11 @@ import org.springframework.context.annotation.FilterType
 import org.springframework.http.MediaType
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
+import org.springframework.mock.web.MockMultipartFile
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.delete
 import org.springframework.test.web.servlet.get
+import org.springframework.test.web.servlet.multipart
 import org.springframework.test.web.servlet.patch
 import org.springframework.test.web.servlet.post
 import java.time.OffsetDateTime
@@ -74,6 +76,24 @@ class UserControllerTest(
     val responseUsers = listOf(
         UserResponse(userId = 1, name = "user", role = UserResponse.Role.member, createdAt = OffsetDateTime.now(),),
         UserResponse(userId = 2, name = "Ivan", role = UserResponse.Role.admin, createdAt = OffsetDateTime.now(),),
+    )
+
+    val wishRequest = WishRequest(
+        title = "PS5",
+    )
+
+
+    val wish = Wish(
+        id = 1,
+        title = wishRequest.title,
+        user = user
+    )
+
+    val wishResponse = WishResponse(
+        wishId = wish.id,
+        ownerId = user.id,
+        title = wish.title,
+        createdAt = OffsetDateTime.now()
     )
 
     //GetAllUsers
@@ -228,5 +248,37 @@ class UserControllerTest(
         }
 
         verify(exactly = 1) { wishService.create(user.id, wishRequest) }
+    }
+
+    @Test
+    fun `create wish with file returns 200`() {
+        val file = MockMultipartFile(
+            "photo",
+            "image.jpg",
+            MediaType.IMAGE_JPEG_VALUE,
+            "test image content".toByteArray()
+        )
+
+        every { wishService.createWithFile(eq(user.id), any(), any()) } returns wish
+        every { wishMapper.toResponse(wish) } returns wishResponse
+
+        mockMvc.multipart("/api/users/${user.id}/wishes/with-file") {
+            file(file)
+            param("title", "PS5")
+            param("description", "With disk")
+            param("price", "499.99")
+        }.andExpect {
+            status { isOk() }
+            content { contentType(MediaType.APPLICATION_JSON) }
+            jsonPath("$.title") { value(wishResponse.title) }
+        }
+
+        verify(exactly = 1) {
+            wishService.createWithFile(
+                eq(user.id),
+                match { it.title == "PS5" && it.price == 499.99 },
+                any()
+            )
+        }
     }
 }

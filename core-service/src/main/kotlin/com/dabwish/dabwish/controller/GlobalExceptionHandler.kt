@@ -1,6 +1,8 @@
 package com.dabwish.dabwish.controller
 
+import com.dabwish.dabwish.exception.FileSizeLimitExceededException
 import com.dabwish.dabwish.exception.InvalidCredentialsException
+import com.dabwish.dabwish.exception.InvalidFileFormatException
 import com.dabwish.dabwish.exception.MissingCreatedAtException
 import com.dabwish.dabwish.exception.UserAlreadyExistsException
 import com.dabwish.dabwish.exception.UsernameNotFoundException
@@ -87,7 +89,23 @@ class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse)
     }
 
+    @ExceptionHandler(FileSizeLimitExceededException::class)
+    fun handleConflict(e: FileSizeLimitExceededException): ResponseEntity<Error> {
+        val errorResponse = Error(
+            code = HttpStatus.CONFLICT.value(),
+            message = e.message ?: "Conflict"
+        )
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse)
+    }
 
+    @ExceptionHandler(InvalidFileFormatException::class)
+    fun handleConflict(e: InvalidFileFormatException): ResponseEntity<Error> {
+        val errorResponse = Error(
+            code = HttpStatus.CONFLICT.value(),
+            message = e.message ?: "Conflict"
+        )
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse)
+    }
 
     @ExceptionHandler(Exception::class)
     fun handleGeneral(e: Exception): ResponseEntity<Error> {

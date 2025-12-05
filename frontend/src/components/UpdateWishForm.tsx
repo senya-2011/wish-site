@@ -1,6 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
-import { wishesApi } from "../lib/api-client";
+import { wishesApi, filesApi } from "../lib/api-client";
 import type { WishUpdateRequest } from "../api";
 
 export const UpdateWishForm = () => {
@@ -9,6 +9,8 @@ export const UpdateWishForm = () => {
   const [description, setDescription] = useState("");
   const [photoUrl, setPhotoUrl] = useState("");
   const [price, setPrice] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   const mutation = useMutation({
     mutationFn: async (payload: { wishId: number; body: WishUpdateRequest }) => {
@@ -42,6 +44,38 @@ export const UpdateWishForm = () => {
     mutation.mutate({ wishId: id, body });
   };
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setUploadError("Можно загружать только изображения");
+      return;
+    }
+
+    const maxSize = 10 * 1024 * 1024;
+    if (file.size > maxSize) {
+      setUploadError("Размер файла не должен превышать 10MB");
+      return;
+    }
+
+    setUploadError(null);
+    setIsUploading(true);
+
+    try {
+      const response = await filesApi.uploadFile(file);
+      const fileUrl = response.data.file_url;
+      if (fileUrl) {
+        setPhotoUrl(fileUrl);
+      }
+    } catch (error) {
+      console.error("Upload error:", error);
+      setUploadError("Не удалось загрузить файл");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   return (
     <div className="card">
       <h3>Обновить желание</h3>
@@ -61,12 +95,28 @@ export const UpdateWishForm = () => {
           onChange={(e) => setTitle(e.target.value)}
           className="form-input"
         />
-        <input
-          placeholder="Ссылка на фото"
-          value={photoUrl}
-          onChange={(e) => setPhotoUrl(e.target.value)}
-          className="form-input"
-        />
+        <div>
+          <label className="form-label">
+            Загрузить новое фото:
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleFileUpload}
+              disabled={isUploading}
+              className="form-input"
+            />
+          </label>
+          {isUploading && <p>Загрузка...</p>}
+          {uploadError && <p className="error">{uploadError}</p>}
+          {photoUrl && (
+            <div>
+              <img src={photoUrl} alt="Preview" style={{ maxWidth: "200px", marginTop: "10px" }} />
+              <button type="button" onClick={() => setPhotoUrl("")} className="button">
+                Удалить фото
+              </button>
+            </div>
+          )}
+        </div>
         <input
           type="number"
           step="0.01"
