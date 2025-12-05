@@ -34,7 +34,7 @@ abstract class AuthMapper {
             accessToken = accessToken,
             tokenType = tokenType,
             expiresIn = expiresInSeconds,
-            user = userMapper.userToUserResponse(user),
+            user = userMapper.userToUserResponse(user, user.id),
         )
     }
 }

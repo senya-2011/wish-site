@@ -1,0 +1,68 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-telegram-verification-codes-table-v1
+      author: Arsenii Alhimovici
+      changes:
+        - createTable:
+            tableName: telegram_verification_codes
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+
+              - column:
+                  name: user_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_telegram_verification_codes_user
+                    references: users(id)
+
+              - column:
+                  name: telegram_username
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: verification_code
+                  type: varchar(10)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: expires_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: created_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+
+        - addUniqueConstraint:
+            tableName: telegram_verification_codes
+            columnNames: user_id
+            constraintName: uk_telegram_verification_codes_user
+
+        - createIndex:
+            indexName: idx_telegram_verification_codes_code
+            tableName: telegram_verification_codes
+            columns:
+              - column:
+                  name: verification_code
+
+        - createIndex:
+            indexName: idx_telegram_verification_codes_expires_at
+            tableName: telegram_verification_codes
+            columns:
+              - column:
+                  name: expires_at
+

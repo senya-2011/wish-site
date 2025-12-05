@@ -1,7 +1,9 @@
 package com.wish_notification.notification_service.kafka
 
 import com.dabwish.events.wish.WishCreatedEvent
+import com.dabwish.events.wish.WishNotificationEvent
 import com.dabwish.events.wish.WishUpdatedEvent
+import com.wish_notification.notification_service.telegram.TelegramNotificationService
 import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.kafka.annotation.KafkaListener
@@ -9,7 +11,9 @@ import org.springframework.stereotype.Component
 
 @Component
 @ConditionalOnProperty(value = ["app.kafka.enabled"], havingValue = "true", matchIfMissing = true)
-class WishEventListener {
+class WishEventListener(
+    private val telegramNotificationService: TelegramNotificationService,
+) {
     private val log = LoggerFactory.getLogger(this::class.java)
 
     @KafkaListener(
@@ -39,5 +43,19 @@ class WishEventListener {
             event.price ?: "-",
             event.updatedAt
         )
+    }
+
+    @KafkaListener(
+        topics = ["\${app.kafka.topics.wish-notification:wish-notification-events}"],
+    )
+    fun handleWishNotification(event: WishNotificationEvent) {
+        log.info(
+            "Уведомление для @{}: пользователь {} создал новое желание '{}' [Wish ID: {}]",
+            event.subscriberTelegramUsername,
+            event.ownerName,
+            event.wishTitle,
+            event.wishId
+        )
+        telegramNotificationService.sendWishNotification(event)
     }
 }

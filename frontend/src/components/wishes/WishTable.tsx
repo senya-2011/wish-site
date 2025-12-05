@@ -28,7 +28,8 @@ type WishTableProps = {
   totalPages: number;
   onPrevPage: () => void;
   onNextPage: () => void;
-} & WishListHandlers;
+  showActions?: boolean;
+} & Partial<WishListHandlers>;
 
 export const WishTable = ({
   items,
@@ -42,6 +43,7 @@ export const WishTable = ({
   onSelect,
   onEdit,
   onDelete,
+  showActions = true,
 }: WishTableProps) => {
   if (isLoading) {
     return (
@@ -75,13 +77,67 @@ export const WishTable = ({
 
   return (
     <>
-      <Table variant="simple">
+      {/* Mobile view - только название */}
+      <Flex direction="column" gap={3} display={{ base: "flex", md: "none" }}>
+        {items.map((wish) => (
+          <Flex
+            key={wish.wish_id}
+            p={4}
+            bg="white"
+            borderRadius="md"
+            border="1px"
+            borderColor="gray.200"
+            _hover={{ bg: "gray.50", cursor: "pointer", borderColor: "purple.300" }}
+            onClick={() => onSelect?.(wish)}
+            justify="space-between"
+            align="center"
+            gap={2}
+          >
+            <Text fontWeight="semibold" fontSize="md" flex="1">
+              {wish.title}
+            </Text>
+            {showActions && (
+              <Flex gap={2} onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+                {onEdit && (
+                  <Button
+                    size="sm"
+                    colorScheme="purple"
+                    variant="outline"
+                    onClick={(event: MouseEvent<HTMLButtonElement>) => {
+                      event.stopPropagation();
+                      onEdit(wish);
+                    }}
+                  >
+                    Изменить
+                  </Button>
+                )}
+                {onDelete && (
+                  <IconButton
+                    aria-label="Удалить желание"
+                    size="sm"
+                    colorScheme="red"
+                    variant="outline"
+                    icon={<DeleteIcon />}
+                    onClick={(event: MouseEvent<HTMLButtonElement>) => {
+                      event.stopPropagation();
+                      onDelete(wish);
+                    }}
+                  />
+                )}
+              </Flex>
+            )}
+          </Flex>
+        ))}
+      </Flex>
+
+      {/* Desktop view - полная таблица */}
+      <Table variant="simple" display={{ base: "none", md: "table" }}>
         <Thead>
           <Tr>
             <Th>Название</Th>
             <Th>Цена</Th>
             <Th>Создано</Th>
-            <Th textAlign="right">Действия</Th>
+            {showActions && <Th textAlign="right">Действия</Th>}
           </Tr>
         </Thead>
         <Tbody>
@@ -89,7 +145,7 @@ export const WishTable = ({
             <Tr
               key={wish.wish_id}
               _hover={{ bg: "gray.50", cursor: "pointer" }}
-              onClick={() => onSelect(wish)}
+              onClick={() => onSelect?.(wish)}
             >
               <Td>
                 <Text fontWeight="semibold">{wish.title}</Text>
@@ -115,31 +171,37 @@ export const WishTable = ({
                   })}
                 </Text>
               </Td>
-              <Td textAlign="right" verticalAlign="top" whiteSpace="nowrap">
-                <Button
-                  size="sm"
-                  colorScheme="purple"
-                  variant="outline"
-                  mr={2}
-                  onClick={(event: MouseEvent<HTMLButtonElement>) => {
-                    event.stopPropagation();
-                    onEdit(wish);
-                  }}
-                >
-                  Изменить
-                </Button>
-                <IconButton
-                  aria-label="Удалить желание"
-                  size="sm"
-                  colorScheme="red"
-                  variant="outline"
-                  icon={<DeleteIcon />}
-                  onClick={(event: MouseEvent<HTMLButtonElement>) => {
-                    event.stopPropagation();
-                    onDelete(wish);
-                  }}
-                />
-              </Td>
+              {showActions && (
+                <Td textAlign="right" verticalAlign="top" whiteSpace="nowrap">
+                  {onEdit && (
+                    <Button
+                      size="sm"
+                      colorScheme="purple"
+                      variant="outline"
+                      mr={2}
+                      onClick={(event: MouseEvent<HTMLButtonElement>) => {
+                        event.stopPropagation();
+                        onEdit(wish);
+                      }}
+                    >
+                      Изменить
+                    </Button>
+                  )}
+                  {onDelete && (
+                    <IconButton
+                      aria-label="Удалить желание"
+                      size="sm"
+                      colorScheme="red"
+                      variant="outline"
+                      icon={<DeleteIcon />}
+                      onClick={(event: MouseEvent<HTMLButtonElement>) => {
+                        event.stopPropagation();
+                        onDelete(wish);
+                      }}
+                    />
+                  )}
+                </Td>
+              )}
             </Tr>
           ))}
         </Tbody>

@@ -18,6 +18,10 @@ spring:
       ddl-auto: create-drop
   liquibase:
     enabled: false
+  data:
+    elasticsearch:
+      repositories:
+        enabled: false
     
 app:
   kafka:
@@ -25,9 +29,19 @@ app:
   jwt:
     secret: Xtd5Fk7WIZS4tpwRMaqqTlaJBVkRpr3U
     expiration-seconds: 3600
+  elasticsearch:
+    enabled: false
+    auto-reindex: false
 
 server:
   port: 0
 
 MY_PORT: 0
+
+minio:
+  url: http://localhost:9000
+  public-url: http://localhost:9000
+  access-key: minioadmin
+  secret-key: minioadmin
+  bucket-name: test-bucket
 

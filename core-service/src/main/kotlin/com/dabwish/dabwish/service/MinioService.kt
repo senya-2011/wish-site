@@ -17,6 +17,7 @@ class MinioService(
     private val minioClient: MinioClient,
     @Value("\${minio.bucket-name}") private val bucketName: String,
     @Value("\${minio.url}") private val minioUrl: String,
+    @Value("\${minio.public-url:}") private val minioPublicUrl: String?,
 ) {
     private val logger = LoggerFactory.getLogger(this::class.java)
 
@@ -49,8 +50,19 @@ class MinioService(
     }
 
     fun getFileUrl(objectName: String): String {
-        val cleanUrl = minioUrl.removeSuffix("/")
+        val cleanUrl = resolvePublicBase().removeSuffix("/")
         return "$cleanUrl/$bucketName/$objectName"
+    }
+
+    fun toPublicUrl(url: String?): String? {
+        if (url.isNullOrBlank()) return url
+        val internalBase = minioUrl.removeSuffix("/")
+        val publicBase = resolvePublicBase().removeSuffix("/")
+        return if (url.startsWith(internalBase)) {
+            publicBase + url.removePrefix(internalBase)
+        } else {
+            url
+        }
     }
 
     fun extractObjectNameFromUrl(url: String?): String? {
@@ -101,4 +113,7 @@ class MinioService(
             .takeIf { it.isNotBlank() && it.length <= 5 }
             ?: "bin"
     }
+
+    private fun resolvePublicBase(): String =
+        minioPublicUrl?.takeIf { it.isNotBlank() } ?: minioUrl
 }

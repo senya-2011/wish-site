@@ -11,6 +11,7 @@ import {
 } from "@chakra-ui/react";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import type { WishPageResponse, WishRequest, WishResponse, WishUpdateRequest } from "../../api";
 import { wishesApi } from "../../lib/api-client";
 import { useAuth } from "../../context/useAuth";
@@ -18,7 +19,6 @@ import type { WishFormState } from "./types";
 import { WishTable } from "./WishTable";
 import { CreateWishModal } from "./CreateWishModal";
 import { EditWishModal } from "./EditWishModal";
-import { WishDetailsModal } from "./WishDetailsModal";
 import { DeleteWishDialog } from "./DeleteWishDialog";
 
 const PAGE_SIZE = 10;
@@ -38,12 +38,10 @@ export const MyWishesPage = () => {
   const [createForm, setCreateForm] = useState<WishFormState>(getDefaultFormState);
   const [editForm, setEditForm] = useState<WishFormState>(getDefaultFormState);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [detailWish, setDetailWish] = useState<WishResponse | null>(null);
   const [wishToDelete, setWishToDelete] = useState<WishResponse | null>(null);
 
   const createModal = useDisclosure();
   const editModal = useDisclosure();
-  const detailModal = useDisclosure();
   const deleteDialog = useDisclosure();
 
   const userId = user?.user_id;
@@ -156,9 +154,10 @@ export const MyWishesPage = () => {
     deleteDialog.onOpen();
   };
 
+  const navigate = useNavigate();
+  
   const openDetailModal = (wish: WishResponse) => {
-    setDetailWish(wish);
-    detailModal.onOpen();
+    navigate(`/wishes/${wish.wish_id}`);
   };
 
   return (
@@ -217,8 +216,6 @@ export const MyWishesPage = () => {
         isLoading={updateMutation.isPending}
         hasError={Boolean(updateMutation.isError)}
       />
-
-      <WishDetailsModal wish={detailWish} isOpen={detailModal.isOpen} onClose={detailModal.onClose} onEdit={openEditModal} />
 
       <DeleteWishDialog
         isOpen={deleteDialog.isOpen}

@@ -1,6 +1,7 @@
 package com.dabwish.dabwish.service
 
 import com.dabwish.dabwish.events.WishEventPublisher
+import com.dabwish.dabwish.events.WishNotificationEventPublisher
 import com.dabwish.dabwish.exception.UserNotFoundException
 import com.dabwish.dabwish.exception.WishNotFoundException
 import com.dabwish.dabwish.generated.dto.WishRequest
@@ -31,13 +32,18 @@ class WishServiceTest {
     private val userRepository = mockk<UserRepository>()
     private val eventPublisher = mockk<WishEventPublisher>(relaxed = true)
     private val minioService = mockk<MinioService>()
+    private val wishNotificationEventPublisher = mockk<WishNotificationEventPublisher>(relaxed = true)
+    private val userSubscriptionService = mockk<UserSubscriptionService>(relaxed = true)
 
     private val service = WishService(
         wishRepository,
         wishMapper,
         userRepository,
         eventPublisher,
-        minioService
+        minioService,
+        null,
+        wishNotificationEventPublisher,
+        userSubscriptionService
     )
 
     @BeforeEach
@@ -95,13 +101,14 @@ class WishServiceTest {
     @Test
     fun `create saves wish and publishes event`() {
         val request = mockk<WishRequest>()
-        val user = mockk<User>()
-        val wish = mockk<Wish>()
+        val user = User(id = 1L, name = "TestUser", role = com.dabwish.dabwish.model.user.UserRole.MEMBER)
+        val wish = Wish(id = 0L, user = user, title = "Test Wish")
 
         every { userRepository.findById(1L) } returns Optional.of(user)
         every { wishMapper.toEntity(request, user) } returns wish
         every { wishRepository.save(wish) } returns wish
         every { request.photoUrl } returns null
+        every { userSubscriptionService?.getSubscribers(1L) } returns emptyList()
 
         val result = service.create(1L, request)
 
@@ -115,6 +122,7 @@ class WishServiceTest {
     @Test
     fun `delete removes entity`() {
         val wish = mockk<Wish>()
+        every { wish.id } returns 5L
         every { wish.photoUrl } returns "http://some-url/photo.jpg"
         every { minioService.extractObjectNameFromUrl("http://some-url/photo.jpg") } returns "photo.jpg"
         every { minioService.deleteFile("photo.jpg") } returns Unit

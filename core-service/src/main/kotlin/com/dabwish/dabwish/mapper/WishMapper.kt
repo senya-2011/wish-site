@@ -5,6 +5,7 @@ import com.dabwish.dabwish.generated.dto.WishResponse
 import com.dabwish.dabwish.generated.dto.WishUpdateRequest
 import com.dabwish.dabwish.model.user.User
 import com.dabwish.dabwish.model.wish.Wish
+import com.dabwish.dabwish.model.wish.WishDoc
 import com.dabwish.events.wish.WishCreatedEvent
 import com.dabwish.events.wish.WishUpdatedEvent
 import org.mapstruct.Mapper
@@ -48,4 +49,9 @@ interface WishMapper {
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "user", ignore = true)
     fun updateEntityFromRequest(request: WishUpdateRequest, @MappingTarget wish: Wish)
+
+    // Elasticsearch
+    @Mapping(source = "id", target = "id")
+    @Mapping(source = "user.id", target = "ownerId")
+    fun toDoc(wish: Wish): WishDoc
 }

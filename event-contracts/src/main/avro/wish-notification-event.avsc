@@ -1,0 +1,39 @@
+{
+  "type" : "record",
+  "name" : "WishNotificationEvent",
+  "namespace" : "com.dabwish.events.wish",
+  "doc" : "Event emitted to notify subscribers when a user creates a new wish.",
+  "fields" : [
+    {
+      "name" : "wishId",
+      "type" : "long",
+      "doc" : "Unique identifier of the created wish."
+    },
+    {
+      "name" : "ownerId",
+      "type" : "long",
+      "doc" : "ID of the user who created this wish."
+    },
+    {
+      "name" : "ownerName",
+      "type" : "string",
+      "doc" : "Name of the user who created this wish."
+    },
+    {
+      "name" : "wishTitle",
+      "type" : "string",
+      "doc" : "Title of the created wish."
+    },
+    {
+      "name" : "subscriberId",
+      "type" : "long",
+      "doc" : "ID of the subscriber who should receive this notification."
+    },
+    {
+      "name" : "subscriberTelegramUsername",
+      "type" : "string",
+      "doc" : "Telegram username of the subscriber to notify."
+    }
+  ]
+}
+

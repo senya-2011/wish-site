@@ -6,5 +6,6 @@ export type AuthContextValue = {
   login: (payload: LoginRequest) => Promise<void>;
   register: (payload: RegisterRequest) => Promise<void>;
   logout: () => void;
+  refreshUser?: () => Promise<void>;
 };
 
