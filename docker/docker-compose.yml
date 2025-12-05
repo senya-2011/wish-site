@@ -30,6 +30,7 @@ services:
     ports:
       - "${KAFKA_EXTERNAL_PORT:-9094}:9094"
     environment:
+      KAFKA_HEAP_OPTS: "-Xms512m -Xmx512m"
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
@@ -202,13 +203,14 @@ services:
       - ELASTICSEARCH_URI=http://elasticsearch:9200
       - ELASTICSEARCH_ENABLED=${ELASTICSEARCH_ENABLED:-true}
       - MINIO_URL=http://minio:9000
-      - MINIO_PUBLIC_URL=${MINIO_PUBLIC_URL:-http://localhost:9000}
+      - MINIO_PUBLIC_URL=${MINIO_PUBLIC_URL:-https://dabwish.ru/minio}
       - MINIO_ROOT_USER=${MINIO_ROOT_USER}
       - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
       - MINIO_BUCKET_NAME=${MINIO_BUCKET_NAME:-dabwish-images}
       - APP_JWT_SECRET=${APP_JWT_SECRET}
       - APP_JWT_EXPIRATION=${APP_JWT_EXPIRATION:-3600}
-      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:5173}
+      - FRONTEND_URL=${FRONTEND_URL:-https://dabwish.ru}
+      - JAVA_OPTS=-Xmx300m
     networks:
       - dabwish-net
     restart: unless-stopped
@@ -244,7 +246,8 @@ services:
       - SCHEMA_REGISTRY_URL=http://schema-registry:8081
       - TELEGRAM_BOT_USERNAME=${TELEGRAM_BOT_USERNAME}
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
-      - FRONTEND_BASE_URL=${FRONTEND_URL:-http://localhost:5173}
+      - FRONTEND_BASE_URL=${FRONTEND_URL:-https://dabwish.ru}
+      - JAVA_OPTS=-Xmx300m
     networks:
       - dabwish-net
     restart: unless-stopped
@@ -291,38 +294,38 @@ services:
       timeout: 10s
       retries: 5
 
-  # Kafka UI 
-  kafka-ui:
-    image: provectuslabs/kafka-ui:latest
-    container_name: dabwish-kafka-ui
-    depends_on:
-      - kafka
-      - schema-registry
-    ports:
-      - "${KAFKA_UI_PORT:-8090}:8080"
-    environment:
-      KAFKA_CLUSTERS_0_NAME: local-kraft
-      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
-      KAFKA_CLUSTERS_0_SCHEMAREGISTRY: http://schema-registry:8081
-    networks:
-      - dabwish-net
-    profiles:
-      - dev
+  # Kafka UI (dev only)
+  # kafka-ui:
+  #   image: provectuslabs/kafka-ui:latest
+  #   container_name: dabwish-kafka-ui
+  #   depends_on:
+  #     - kafka
+  #     - schema-registry
+  #   ports:
+  #     - "${KAFKA_UI_PORT:-8090}:8080"
+  #   environment:
+  #     KAFKA_CLUSTERS_0_NAME: local-kraft
+  #     KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+  #     KAFKA_CLUSTERS_0_SCHEMAREGISTRY: http://schema-registry:8081
+  #   networks:
+  #     - dabwish-net
+  #   profiles:
+  #     - dev
 
-  # Redis Commander 
-  redis-commander:
-    container_name: dabwish-redis-commander
-    image: rediscommander/redis-commander:latest
-    restart: always
-    environment:
-      - REDIS_HOSTS=local:redis:6379
-      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
-    ports:
-      - "${REDIS_COMMANDER_PORT:-8082}:8081"
-    networks:
-      - dabwish-net
-    profiles:
-      - dev
+  # Redis Commander (dev only)
+  # redis-commander:
+  #   container_name: dabwish-redis-commander
+  #   image: rediscommander/redis-commander:latest
+  #   restart: always
+  #   environment:
+  #     - REDIS_HOSTS=local:redis:6379
+  #     - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+  #   ports:
+  #     - "${REDIS_COMMANDER_PORT:-8082}:8081"
+  #   networks:
+  #     - dabwish-net
+  #   profiles:
+  #     - dev
 
 volumes:
   pgdata:

@@ -238,31 +238,34 @@ class WishService(
     }
 
     fun search(query: String, pageable: Pageable, excludeUserId: Long? = null): Page<Wish> {
-        val wishDocsPage = wishElasticsearchRepository?.searchByQuery(query, pageable)
-            ?: Page.empty(pageable)
+        wishElasticsearchRepository?.let { esRepo ->
+            try {
+                val wishDocsPage = esRepo.searchByQuery(query, pageable)
+                val wishIds = wishDocsPage.content.map { it.id }
+                if (wishIds.isNotEmpty()) {
+                    val wishes = wishRepository.findAllById(wishIds)
+                    val wishesMap = wishes.associateBy { it.id }
 
-        val wishIds = wishDocsPage.content.map { it.id }
-        if (wishIds.isEmpty()) {
-            return Page.empty(pageable)
+                    val orderedWishes = wishIds.mapNotNull { wishesMap[it] }
+                        .filter { excludeUserId == null || it.user.id != excludeUserId }
+
+                    val adjustedTotal = if (excludeUserId != null && orderedWishes.size < wishIds.size) {
+                        maxOf(0, wishDocsPage.totalElements - 1)
+                    } else {
+                        wishDocsPage.totalElements
+                    }
+
+                    return PageImpl(orderedWishes, pageable, adjustedTotal)
+                }
+            } catch (ex: Exception) {
+                logger.warn("Elasticsearch search failed, falling back to DB: ${ex.message}", ex)
+            }
         }
 
-        val wishes = wishRepository.findAllById(wishIds)
-        val wishesMap = wishes.associateBy { it.id }
-
-        val orderedWishes = wishIds.mapNotNull { wishesMap[it] }
-            .filter { excludeUserId == null || it.user.id != excludeUserId }
-
-        val adjustedTotal = if (excludeUserId != null && orderedWishes.size < wishIds.size) {
-            maxOf(0, wishDocsPage.totalElements - 1)
-        } else {
-            wishDocsPage.totalElements
-        }
-
-        return PageImpl(
-            orderedWishes,
-            pageable,
-            adjustedTotal
-        )
+        val dbPage = wishRepository.searchByText(query, pageable)
+        val filtered = dbPage.content.filter { excludeUserId == null || it.user.id != excludeUserId }
+        val total = if (excludeUserId == null) dbPage.totalElements else filtered.size.toLong()
+        return PageImpl(filtered, pageable, total)
     }
 
     @Transactional(readOnly = true)
