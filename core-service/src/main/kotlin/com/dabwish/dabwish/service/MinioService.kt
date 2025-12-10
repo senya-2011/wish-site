@@ -1,11 +1,11 @@
 package com.dabwish.dabwish.service
 
+import com.dabwish.dabwish.config.MinioProperties
 import com.dabwish.dabwish.exception.FileStorageException
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.minio.MinioClient
 import io.minio.PutObjectArgs
 import io.minio.RemoveObjectArgs
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
 import java.io.InputStream
@@ -17,8 +17,7 @@ private val logger = KotlinLogging.logger {}
 @Service
 class MinioService(
     private val minioClient: MinioClient,
-    @Value("\${minio.bucket-name}") private val bucketName: String,
-    @Value("\${minio.url}") private val minioUrl: String,
+    private val minioProperties: MinioProperties,
 ) {
     fun uploadFile(file: MultipartFile, prefix: String = ""): String {
         val originalFilename = file.originalFilename
@@ -38,7 +37,7 @@ class MinioService(
         try {
             minioClient.removeObject(
                 RemoveObjectArgs.builder()
-                    .bucket(bucketName)
+                    .bucket(minioProperties.bucketName)
                     .`object`(objectName)
                     .build()
             )
@@ -49,14 +48,14 @@ class MinioService(
     }
 
     fun getFileUrl(objectName: String): String {
-        val cleanUrl = minioUrl.removeSuffix("/")
-        return "$cleanUrl/$bucketName/$objectName"
+        val cleanUrl = minioProperties.url.removeSuffix("/")
+        return "$cleanUrl/${minioProperties.bucketName}/$objectName"
     }
 
     fun extractObjectNameFromUrl(url: String?): String? {
         if (url.isNullOrBlank()) return null
         
-        val bucketPath = "$bucketName/"
+        val bucketPath = "${minioProperties.bucketName}/"
         return if (url.contains(bucketPath)) {
             url.substringAfter(bucketPath)
         } else {
@@ -77,7 +76,7 @@ class MinioService(
             stream.use {
                 minioClient.putObject(
                     PutObjectArgs.builder()
-                        .bucket(bucketName)
+                        .bucket(minioProperties.bucketName)
                         .`object`(objectName)
                         .stream(it, size, -1)
                         .contentType(contentType)
@@ -87,7 +86,7 @@ class MinioService(
             logger.info { "Successfully uploaded file to MinIO: $objectName" }
             return objectName
         } catch (e: Exception) {
-            logger.error(e) { "Failed to upload file to MinIO. Bucket: $bucketName, Object: $objectName" }
+            logger.error(e) { "Failed to upload file to MinIO. Bucket: ${minioProperties.bucketName}, Object: $objectName" }
             throw FileStorageException("Failed to upload file to storage", e)
         }
     }
