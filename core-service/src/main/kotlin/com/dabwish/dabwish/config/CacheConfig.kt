@@ -9,10 +9,10 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator
 import com.fasterxml.jackson.databind.module.SimpleModule
 import java.time.Duration
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.cache.annotation.EnableCaching
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.redis.cache.RedisCacheConfiguration
@@ -25,10 +25,9 @@ import org.springframework.data.redis.serializer.SerializationException
 
 @Configuration
 @EnableCaching
+@EnableConfigurationProperties(CacheProperties::class)
 class CacheConfig(
-    @Value("\${app.cache.ttl.users-seconds:900}") private val usersTtlSeconds: Long,
-    @Value("\${app.cache.ttl.wishes-seconds:600}") private val wishesTtlSeconds: Long,
-    @Value("\${app.cache.ttl.wish-list-seconds:120}") private val wishListTtlSeconds: Long,
+    private val cacheProperties: CacheProperties,
     private val objectMapper: ObjectMapper,
 ) {
 
@@ -176,12 +175,12 @@ class CacheConfig(
 
         val defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
             .serializeValuesWith(pagePair)
-            .entryTtl(Duration.ofSeconds(wishListTtlSeconds))
+            .entryTtl(Duration.ofSeconds(cacheProperties.ttl.wishListSeconds))
 
-        val usersCache = defaultConfig.entryTtl(Duration.ofSeconds(usersTtlSeconds))
+        val usersCache = defaultConfig.entryTtl(Duration.ofSeconds(cacheProperties.ttl.usersSeconds))
         val wishesCache = RedisCacheConfiguration.defaultCacheConfig()
             .serializeValuesWith(wishPair)
-            .entryTtl(Duration.ofSeconds(wishesTtlSeconds))
+            .entryTtl(Duration.ofSeconds(cacheProperties.ttl.wishesSeconds))
 
         return RedisCacheManager.builder(connectionFactory)
             .cacheDefaults(defaultConfig)
