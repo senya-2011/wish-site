@@ -1,26 +1,26 @@
 package com.dabwish.dabwish.service
 
+import com.dabwish.dabwish.config.MinioProperties
 import com.dabwish.dabwish.exception.FileStorageException
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.minio.MinioClient
 import io.minio.PutObjectArgs
 import io.minio.RemoveObjectArgs
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
 import java.io.InputStream
 import java.util.UUID
 
+private val logger = KotlinLogging.logger {}
+
 
 @Service
 class MinioService(
     private val minioClient: MinioClient,
-    @Value("\${minio.bucket-name}") private val bucketName: String,
-    @Value("\${minio.url}") private val minioUrl: String,
+    private val minioProperties: MinioProperties,
     @Value("\${minio.public-url:}") private val minioPublicUrl: String?,
 ) {
-    private val logger = LoggerFactory.getLogger(this::class.java)
-
     fun uploadFile(file: MultipartFile, prefix: String = ""): String {
         val originalFilename = file.originalFilename
             ?: throw FileStorageException("File must have a name")
@@ -39,24 +39,25 @@ class MinioService(
         try {
             minioClient.removeObject(
                 RemoveObjectArgs.builder()
-                    .bucket(bucketName)
+                    .bucket(minioProperties.bucketName)
                     .`object`(objectName)
                     .build()
             )
-            logger.info("Deleted file from MinIO: $objectName")
+            logger.info { "Deleted file from MinIO: $objectName" }
         } catch (e: Exception) {
-            logger.warn("Failed to delete file from MinIO: $objectName", e)
+            logger.warn(e) { "Failed to delete file from MinIO: $objectName" }
         }
     }
 
     fun getFileUrl(objectName: String): String {
-        val cleanUrl = resolvePublicBase().removeSuffix("/")
-        return "$cleanUrl/$bucketName/$objectName"
+        val cleanUrl = minioProperties.url.removeSuffix("/")
+        return "$cleanUrl/${minioProperties.bucketName}/$objectName"
+        return "$cleanUrl/${minioProperties.bucketName}/$objectName"
     }
 
     fun toPublicUrl(url: String?): String? {
         if (url.isNullOrBlank()) return url
-        val internalBase = minioUrl.removeSuffix("/")
+        val internalBase = minioProperties.url.removeSuffix("/")
         val publicBase = resolvePublicBase().removeSuffix("/")
         return if (url.startsWith(internalBase)) {
             publicBase + url.removePrefix(internalBase)
@@ -68,7 +69,7 @@ class MinioService(
     fun extractObjectNameFromUrl(url: String?): String? {
         if (url.isNullOrBlank()) return null
         
-        val bucketPath = "$bucketName/"
+        val bucketPath = "${minioProperties.bucketName}/"
         return if (url.contains(bucketPath)) {
             url.substringAfter(bucketPath)
         } else {
@@ -89,17 +90,17 @@ class MinioService(
             stream.use {
                 minioClient.putObject(
                     PutObjectArgs.builder()
-                        .bucket(bucketName)
+                        .bucket(minioProperties.bucketName)
                         .`object`(objectName)
                         .stream(it, size, -1)
                         .contentType(contentType)
                         .build()
                 )
             }
-            logger.info("Successfully uploaded file to MinIO: $objectName")
+            logger.info { "Successfully uploaded file to MinIO: $objectName" }
             return objectName
         } catch (e: Exception) {
-            logger.error("Failed to upload file to MinIO. Bucket: $bucketName, Object: $objectName", e)
+            logger.error(e) { "Failed to upload file to MinIO. Bucket: ${minioProperties.bucketName}, Object: $objectName" }
             throw FileStorageException("Failed to upload file to storage", e)
         }
     }
@@ -115,5 +116,5 @@ class MinioService(
     }
 
     private fun resolvePublicBase(): String =
-        minioPublicUrl?.takeIf { it.isNotBlank() } ?: minioUrl
+        minioPublicUrl?.takeIf { it.isNotBlank() } ?: minioProperties.url
 }

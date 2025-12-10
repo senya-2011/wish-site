@@ -9,7 +9,6 @@ import com.dabwish.dabwish.model.user.User
 import com.dabwish.dabwish.repository.UserRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.cache.annotation.CacheEvict
-import org.springframework.cache.annotation.CachePut
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.cache.annotation.Caching
 import org.springframework.data.domain.Page
@@ -25,6 +24,7 @@ class UserService(
 ) {
     fun findAll(): List<User> = userRepository.findAll()
 
+    @Cacheable(cacheNames = ["usersById"], key = "#id")
     fun findById(id: Long): User {
         return userRepository.findById(id).
                 orElseThrow{ UserNotFoundException(id) }
@@ -44,6 +44,7 @@ class UserService(
     @Transactional
     @Caching(
         evict = [
+            CacheEvict(cacheNames = ["usersById"], key = "#id"),
             CacheEvict(cacheNames = ["userWishes"], allEntries = true),
             CacheEvict(cacheNames = ["userSearch"], allEntries = true),
         ],
@@ -54,9 +55,7 @@ class UserService(
     }
 
     @Transactional
-    @Caching(
-        evict = [CacheEvict(cacheNames = ["userSearch"], allEntries = true)],
-    )
+    @CacheEvict(cacheNames = ["usersById"], key = "#id")
     fun update(id: Long, userUpdateRequest: UserUpdateRequest): User {
         val user = userRepository.findById(id).orElseThrow { UserNotFoundException(id) }
         userMapper.updateUserFromRequest(userUpdateRequest, user)

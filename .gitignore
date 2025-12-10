@@ -42,3 +42,7 @@ out/
 ### Docker Artifacts ###
 docker/artifacts/*
 !docker/artifacts/.gitkeep
+
+### Docker ###
+docker/.env
+docker/artifacts/

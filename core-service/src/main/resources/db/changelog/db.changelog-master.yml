@@ -11,3 +11,5 @@ databaseChangeLog:
       file: db/changelog/changeset/005-create-telegram-verification-codes.yml
   - include:
       file: db/changelog/changeset/006-create-telegram-chat-links.yml
+  - include:
+      file: db/changelog/changeset/add-version-users.yml
