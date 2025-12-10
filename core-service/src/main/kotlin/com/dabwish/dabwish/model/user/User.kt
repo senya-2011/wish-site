@@ -8,6 +8,7 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
+import jakarta.persistence.Version
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.UpdateTimestamp
 import org.hibernate.proxy.HibernateProxy
@@ -17,12 +18,17 @@ import java.time.OffsetDateTime
 @Entity
 @Table(name = "users")
 data class User(
+
+    @Version
+    @Column(name = "version")
+    var version: Int? = null,
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name="id", nullable = false)
     var id: Long = 0,
 
-    @Column(name="name", nullable = false)
+    @Column(name="name", nullable = false, unique = true)
     var name: String,
 
     @Enumerated(EnumType.STRING)
