@@ -1,12 +1,12 @@
 package com.dabwish.dabwish.util
 
-import org.slf4j.LoggerFactory
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.transaction.support.TransactionSynchronization
 import org.springframework.transaction.support.TransactionSynchronizationManager
 
-object TransactionUtil {
+private val logger = KotlinLogging.logger {}
 
-    private val logger = LoggerFactory.getLogger(this::class.java)
+object TransactionUtil {
 
     fun afterCommit(action: () -> Unit) {
         if (TransactionSynchronizationManager.isActualTransactionActive()) {

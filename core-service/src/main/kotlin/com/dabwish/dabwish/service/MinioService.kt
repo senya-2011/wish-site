@@ -1,15 +1,17 @@
 package com.dabwish.dabwish.service
 
 import com.dabwish.dabwish.exception.FileStorageException
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.minio.MinioClient
 import io.minio.PutObjectArgs
 import io.minio.RemoveObjectArgs
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
 import java.io.InputStream
 import java.util.UUID
+
+private val logger = KotlinLogging.logger {}
 
 
 @Service
@@ -18,8 +20,6 @@ class MinioService(
     @Value("\${minio.bucket-name}") private val bucketName: String,
     @Value("\${minio.url}") private val minioUrl: String,
 ) {
-    private val logger = LoggerFactory.getLogger(this::class.java)
-
     fun uploadFile(file: MultipartFile, prefix: String = ""): String {
         val originalFilename = file.originalFilename
             ?: throw FileStorageException("File must have a name")
@@ -42,9 +42,9 @@ class MinioService(
                     .`object`(objectName)
                     .build()
             )
-            logger.info("Deleted file from MinIO: $objectName")
+            logger.info { "Deleted file from MinIO: $objectName" }
         } catch (e: Exception) {
-            logger.warn("Failed to delete file from MinIO: $objectName", e)
+            logger.warn(e) { "Failed to delete file from MinIO: $objectName" }
         }
     }
 
@@ -84,10 +84,10 @@ class MinioService(
                         .build()
                 )
             }
-            logger.info("Successfully uploaded file to MinIO: $objectName")
+            logger.info { "Successfully uploaded file to MinIO: $objectName" }
             return objectName
         } catch (e: Exception) {
-            logger.error("Failed to upload file to MinIO. Bucket: $bucketName, Object: $objectName", e)
+            logger.error(e) { "Failed to upload file to MinIO. Bucket: $bucketName, Object: $objectName" }
             throw FileStorageException("Failed to upload file to storage", e)
         }
     }
