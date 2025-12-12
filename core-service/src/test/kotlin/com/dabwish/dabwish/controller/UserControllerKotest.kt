@@ -9,6 +9,7 @@ import com.dabwish.dabwish.model.wish.Wish
 import com.dabwish.dabwish.service.UserService
 import com.dabwish.dabwish.service.WishService
 import com.ninjasquad.springmockk.MockkBean
+import io.kotest.core.extensions.Extension
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.extensions.spring.SpringExtension
 import io.kotest.property.Arb
@@ -52,7 +53,7 @@ class UserControllerKotest : BehaviorSpec() {
     @MockkBean
     lateinit var wishMapper: WishMapper
 
-    override fun extensions() = listOf(SpringExtension)
+    override fun extensions(): List<Extension> = listOf(SpringExtension)
 
     private data class WishWithFileInput(
         val userId: Long,
