@@ -5,19 +5,19 @@ import io.jsonwebtoken.ExpiredJwtException
 import io.jsonwebtoken.JwtException
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.security.Keys
+import io.github.oshai.kotlinlogging.KotlinLogging
 import java.nio.charset.StandardCharsets
 import java.util.Date
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
+
+private val logger = KotlinLogging.logger {}
 
 @Component
 class JwtTokenProvider(
     @Value("\${app.jwt.secret}") private val secret: String,
     @Value("\${app.jwt.expiration-seconds}") private val expirationSeconds: Long,
 ) {
-
-    private val logger = LoggerFactory.getLogger(JwtTokenProvider::class.java)
     private val signingKey = Keys.hmacShaKeyFor(secret.toByteArray(StandardCharsets.UTF_8))
     private val parser = Jwts.parser().verifyWith(signingKey).build()
 
@@ -51,7 +51,7 @@ class JwtTokenProvider(
         try {
             parser.parseSignedClaims(token).payload.subject.toLong()
         } catch (ex: Exception) {
-            logger.warn("Failed to parse user id from token: {}", ex.message)
+            logger.warn { "Failed to parse user id from token: ${ex.message}" }
             null
         }
 

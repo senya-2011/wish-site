@@ -11,6 +11,7 @@ import {
 } from "@chakra-ui/react";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import type { WishPageResponse, WishRequest, WishResponse, WishUpdateRequest } from "../../api";
 import { wishesApi } from "../../lib/api-client";
 import { useAuth } from "../../context/useAuth";
@@ -18,7 +19,6 @@ import type { WishFormState } from "./types";
 import { WishTable } from "./WishTable";
 import { CreateWishModal } from "./CreateWishModal";
 import { EditWishModal } from "./EditWishModal";
-import { WishDetailsModal } from "./WishDetailsModal";
 import { DeleteWishDialog } from "./DeleteWishDialog";
 
 const PAGE_SIZE = 10;
@@ -27,6 +27,7 @@ const getDefaultFormState = (): WishFormState => ({
   description: "",
   photoUrl: "",
   price: "",
+  photoFile: null,
 });
 
 export const MyWishesPage = () => {
@@ -37,12 +38,10 @@ export const MyWishesPage = () => {
   const [createForm, setCreateForm] = useState<WishFormState>(getDefaultFormState);
   const [editForm, setEditForm] = useState<WishFormState>(getDefaultFormState);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [detailWish, setDetailWish] = useState<WishResponse | null>(null);
   const [wishToDelete, setWishToDelete] = useState<WishResponse | null>(null);
 
   const createModal = useDisclosure();
   const editModal = useDisclosure();
-  const detailModal = useDisclosure();
   const deleteDialog = useDisclosure();
 
   const userId = user?.user_id;
@@ -62,20 +61,32 @@ export const MyWishesPage = () => {
   const safePage = Math.min(Math.max(page, 1), totalPages);
   const items = wishesQuery.data?.items ?? [];
 
-  const handleFormChange = (setter: (value: WishFormState) => void) => (field: keyof WishFormState, value: string) =>
-    setter((prev) => ({ ...prev, [field]: value }));
+  const handleFormChange = (setter: React.Dispatch<React.SetStateAction<WishFormState>>) => (field: keyof WishFormState, value: string | File | null) =>
+    setter((prev: WishFormState) => ({ ...prev, [field]: value }));
 
   const createMutation = useMutation({
     mutationFn: async () => {
       if (!userId) throw new Error("Пользователь не найден");
-      const payload: WishRequest = {
-        title: createForm.title,
-        description: createForm.description || undefined,
-        photo_url: createForm.photoUrl || undefined,
-        price: createForm.price ? Number(createForm.price) : undefined,
-      };
-      const response = await wishesApi.createWish(userId, payload);
-      return response.data;
+      
+      if (createForm.photoFile) {
+        const response = await wishesApi.createWishWithFile(
+          userId,
+          createForm.title,
+          createForm.description || undefined,
+          createForm.photoFile,
+          createForm.price ? Number(createForm.price) : undefined
+        );
+        return response.data;
+      } else {
+        const payload: WishRequest = {
+          title: createForm.title,
+          description: createForm.description || undefined,
+          photo_url: createForm.photoUrl || undefined,
+          price: createForm.price ? Number(createForm.price) : undefined,
+        };
+        const response = await wishesApi.createWish(userId, payload);
+        return response.data;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["my-wishes"] });
@@ -88,14 +99,26 @@ export const MyWishesPage = () => {
   const updateMutation = useMutation({
     mutationFn: async () => {
       if (!editingId) throw new Error("Желание не выбрано");
-      const payload: WishUpdateRequest = {
-        title: editForm.title || undefined,
-        description: editForm.description || undefined,
-        photo_url: editForm.photoUrl || undefined,
-        price: editForm.price ? Number(editForm.price) : undefined,
-      };
-      const response = await wishesApi.updateWishById(editingId, payload);
-      return response.data;
+      
+      if (editForm.photoFile) {
+        const response = await wishesApi.updateWishByIdWithFile(
+          editingId,
+          editForm.title || undefined,
+          editForm.description || undefined,
+          editForm.photoFile,
+          editForm.price ? Number(editForm.price) : undefined
+        );
+        return response.data;
+      } else {
+        const payload: WishUpdateRequest = {
+          title: editForm.title || undefined,
+          description: editForm.description || undefined,
+          photo_url: editForm.photoUrl || undefined,
+          price: editForm.price ? Number(editForm.price) : undefined,
+        };
+        const response = await wishesApi.updateWishById(editingId, payload);
+        return response.data;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["my-wishes"] });
@@ -121,6 +144,7 @@ export const MyWishesPage = () => {
       description: wish.description ?? "",
       photoUrl: wish.photo_url ?? "",
       price: wish.price !== undefined ? String(wish.price) : "",
+      photoFile: null,
     });
     editModal.onOpen();
   };
@@ -130,9 +154,10 @@ export const MyWishesPage = () => {
     deleteDialog.onOpen();
   };
 
+  const navigate = useNavigate();
+  
   const openDetailModal = (wish: WishResponse) => {
-    setDetailWish(wish);
-    detailModal.onOpen();
+    navigate(`/wishes/${wish.wish_id}`);
   };
 
   return (
@@ -191,8 +216,6 @@ export const MyWishesPage = () => {
         isLoading={updateMutation.isPending}
         hasError={Boolean(updateMutation.isError)}
       />
-
-      <WishDetailsModal wish={detailWish} isOpen={detailModal.isOpen} onClose={detailModal.onClose} onEdit={openEditModal} />
 
       <DeleteWishDialog
         isOpen={deleteDialog.isOpen}

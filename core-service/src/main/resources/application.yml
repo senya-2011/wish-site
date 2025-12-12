@@ -6,19 +6,39 @@ spring:
     change-log: classpath:db/changelog/db.changelog-master.yml
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5432/dev-db
+    url: jdbc:postgresql://${DB_HOST:postgres}:${DB_PORT:5432}/${DB_NAME:dabwish}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: none
+  cache:
+    type: redis
+    # type: none #for Hikari
+  data:
+    redis:
+      host: ${REDIS_HOST:redis}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 5000
+      lettuce:
+        pool:
+          enabled: true
+          max-active: 32
+          max-idle: 16
+          min-idle: 4
+          max-wait: 100ms
+    elasticsearch:
+      uris: ${ELASTICSEARCH_URI:http://elasticsearch:9200}
+      repositories:
+        enabled: ${ELASTICSEARCH_ENABLED:true}
   profiles:
     active: ${SPRING_ACTIVE_PROFILE:dev}
   kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9094}
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
     properties:
-      schema.registry.url: ${SCHEMA_REGISTRY_URL:http://localhost:8081}
+      schema.registry.url: ${SCHEMA_REGISTRY_URL:http://schema-registry:8081}
       specific.avro.reader: true
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
@@ -42,6 +62,41 @@ app:
       user-created: ${USER-CREATED-KAFKA:user-created-events}
       wish-created: ${WISH-CREATED-KAFKA:wish-created-events}
       wish-updated: ${WISH-UPDATED-KAFKA:wish-updated-events}
+      telegram-verification-code: ${TELEGRAM-VERIFICATION-CODE-KAFKA:telegram-verification-code-events}
+      wish-notification: ${WISH-NOTIFICATION-KAFKA:wish-notification-events}
+  cors:
+    allowed-origins: ${FRONTEND_URL:http://localhost:5173}
   jwt:
-    secret: ${APP_JWT_SECRET:Xtd5Fk7WIZS4tpwRMaqqTlaJBVkRpr3U}
+    secret: ${APP_JWT_SECRET}
     expiration-seconds: ${APP_JWT_EXPIRATION:3600}
+  cache:
+    logging:
+      enabled: ${APP_LOGGING:true}
+    ttl:
+      users-seconds: ${APP_CACHE_USERS_TTL:900}
+      wishes-seconds: ${APP_CACHE_WISHES_TTL:600}
+      wish-list-seconds: ${APP_CACHE_WISH_LIST_TTL:120}
+  elasticsearch:
+    enabled: ${ELASTICSEARCH_ENABLED:true}
+    auto-reindex: ${ELASTICSEARCH_AUTO_REINDEX:false}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "metrics,prometheus"
+  metrics:
+    cache:
+      instrument: true
+    tags:
+      application: dabwish
+    enable:
+      cache: true
+
+minio:
+  url: ${MINIO_URL:http://minio:9000}
+  public-url: ${MINIO_PUBLIC_URL:http://localhost:9000}
+  access-key: ${MINIO_ROOT_USER}
+  secret-key: ${MINIO_ROOT_PASSWORD}
+  bucket-name: ${MINIO_BUCKET_NAME:dabwish-images}
+

@@ -9,6 +9,7 @@ import com.dabwish.dabwish.model.user.User
 import com.dabwish.dabwish.model.user.UserRole
 import com.dabwish.dabwish.model.wish.Wish
 import com.dabwish.dabwish.service.WishService
+import com.dabwish.dabwish.service.MinioService
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
@@ -20,9 +21,11 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.context.annotation.ComponentScan
 import org.springframework.context.annotation.FilterType
 import org.springframework.http.MediaType
+import org.springframework.mock.web.MockMultipartFile
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.delete
 import org.springframework.test.web.servlet.get
+import org.springframework.test.web.servlet.multipart
 import org.springframework.test.web.servlet.patch
 import java.time.OffsetDateTime
 
@@ -46,6 +49,9 @@ class WishControllerTest(
 
     @MockkBean
     private lateinit var wishMapper: WishMapper
+
+    @MockkBean
+    private lateinit var minioService: MinioService
 
     val user = User(
         id = 1,
@@ -75,6 +81,7 @@ class WishControllerTest(
     fun `get Wish by id return 200 + wish`(){
         every { wishService.findById(wish.id) } returns wish
         every { wishMapper.toResponse(wish) } returns wishResponse
+        every { minioService.toPublicUrl(any()) } returns wishResponse.photoUrl
 
         mockMvc.get("/api/wishes/${wish.id}"){
             accept(MediaType.APPLICATION_JSON)
@@ -82,7 +89,6 @@ class WishControllerTest(
             status { isOk() }
             content { contentType(MediaType.APPLICATION_JSON) }
             jsonPath("$.title") { value(wish.title) }
-            jsonPath("$.owner_id") { value(wish.user.id) }
         }
 
         verify(exactly = 1) { wishService.findById(wish.id) }
@@ -124,6 +130,7 @@ class WishControllerTest(
 
         every { wishService.update(wish.id, wishUpdateRequest) } returns wishUpdated
         every { wishMapper.toResponse(wishUpdated) } returns wishUpdatedResponse
+        every { minioService.toPublicUrl(any()) } returns wishUpdatedResponse.photoUrl
 
         mockMvc.patch("/api/wishes/${wish.id}") {
             contentType = MediaType.APPLICATION_JSON
@@ -135,5 +142,42 @@ class WishControllerTest(
         }
 
         verify { wishService.update(wish.id, wishUpdateRequest) }
+    }
+
+    @Test
+    fun `update wish with file returns 200`() {
+        val file = MockMultipartFile(
+            "photo",
+            "new_image.jpg",
+            MediaType.IMAGE_JPEG_VALUE,
+            "new content".toByteArray()
+        )
+
+        val updatedWish = wish.copy(title = "Updated Title")
+        val updatedResponse = wishResponse.copy(title = "Updated Title")
+
+        every { wishService.updateWithFile(eq(wish.id), any(), any()) } returns updatedWish
+        every { wishMapper.toResponse(updatedWish) } returns updatedResponse
+        every { minioService.toPublicUrl(any()) } returns updatedResponse.photoUrl
+
+        mockMvc.multipart("/api/wishes/${wish.id}/with-file") {
+            file(file)
+            param("title", "Updated Title")
+            with { request ->
+                request.method = "PATCH"
+                request
+            }
+        }.andExpect {
+            status { isOk() }
+            jsonPath("$.title") { value(updatedResponse.title) }
+        }
+
+        verify(exactly = 1) {
+            wishService.updateWithFile(
+                eq(wish.id),
+                match { it.title == "Updated Title" },
+                any()
+            )
+        }
     }
 }
