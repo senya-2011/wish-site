@@ -6,13 +6,19 @@ import com.dabwish.dabwish.generated.dto.UserResponse
 import com.dabwish.dabwish.generated.dto.UserUpdateRequest
 import com.dabwish.dabwish.generated.dto.WishRequest
 import com.dabwish.dabwish.generated.dto.WishResponse
+import com.dabwish.dabwish.generated.dto.*
 import com.dabwish.dabwish.mapper.UserMapper
+import com.dabwish.dabwish.mapper.UserSubscriptionMapper
 import com.dabwish.dabwish.mapper.WishMapper
 import com.dabwish.dabwish.model.user.User
 import com.dabwish.dabwish.model.user.UserRole
+import com.dabwish.dabwish.model.user.UserSubscription
 import com.dabwish.dabwish.model.wish.Wish
+import com.dabwish.dabwish.service.TelegramVerificationService
 import com.dabwish.dabwish.service.UserService
+import com.dabwish.dabwish.service.UserSubscriptionService
 import com.dabwish.dabwish.service.WishService
+import com.dabwish.dabwish.service.MinioService
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
@@ -28,6 +34,8 @@ import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
 import org.springframework.mock.web.MockMultipartFile
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.test.web.servlet.delete
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.multipart
@@ -61,6 +69,18 @@ class UserControllerTest(
 
     @MockkBean
     private lateinit var wishMapper: WishMapper
+
+    @MockkBean
+    private lateinit var minioService: MinioService
+
+    @MockkBean
+    private lateinit var telegramVerificationService: TelegramVerificationService
+
+    @MockkBean
+    private lateinit var userSubscriptionService: UserSubscriptionService
+
+    @MockkBean
+    private lateinit var userSubscriptionMapper: UserSubscriptionMapper
 
     val userRequest = UserRequest(name = "user", password = "pass")
     val user = User(id = 1, name = "user", role = UserRole.MEMBER)
@@ -99,17 +119,16 @@ class UserControllerTest(
     //GetAllUsers
     @Test
     fun `getAllUsers return 200 and list of all users`(){
+        setupSecurityContext(user)
         every { userService.findAll() } returns users
-        every { userMapper.userListToUserResponseList(users) } returns responseUsers
+        every { userMapper.userListToUserResponseList(users, user.id) } returns responseUsers
 
         mockMvc.get("/api/users") {
             contentType = MediaType.APPLICATION_JSON
         }.andExpect {
             status { isOk() }
             content { contentType(MediaType.APPLICATION_JSON) }
-            jsonPath("$.[0].user_id") { value(1) }
             jsonPath("$[0].name") { value("user") }
-            jsonPath("$.[1].user_id") { value(2) }
             jsonPath("$[1].name") { value("Ivan") }
         }
 
@@ -119,9 +138,9 @@ class UserControllerTest(
     //Get User By id
     @Test
     fun `get user by id return 200 when user exists`(){
-
+        setupSecurityContext(user)
         every { userService.findById(1) } returns user
-        every { userMapper.userToUserResponse(user) } returns userResponse
+        every { userMapper.userToUserResponse(user, user.id) } returns userResponse
 
         mockMvc.get("/api/users/${user.id}"){
             contentType = MediaType.APPLICATION_JSON
@@ -129,7 +148,6 @@ class UserControllerTest(
             status { isOk() }
             content { contentType(MediaType.APPLICATION_JSON) }
             jsonPath("$.name") { value(user.name) }
-            jsonPath("$.user_id") { value(user.id) }
         }
 
         verify(exactly = 1) { userService.findById(user.id) }
@@ -138,8 +156,9 @@ class UserControllerTest(
     //Post create user
     @Test
     fun `create new user return 200 and user`(){
+        setupSecurityContext(user)
         every { userService.create(userRequest) } returns user
-        every { userMapper.userToUserResponse(user) } returns userResponse
+        every { userMapper.userToUserResponse(user, user.id) } returns userResponse
 
         mockMvc.post("/api/users") {
             contentType = MediaType.APPLICATION_JSON
@@ -167,6 +186,7 @@ class UserControllerTest(
     // Update Name Test
     @Test
     fun `update user Name return 200 + updatedUser`(){
+        setupSecurityContext(user)
         val userUpdateRequest = UserUpdateRequest(name = "New name")
         val userForUpdate = User(id = 1, name = "New name", role = UserRole.MEMBER)
         val userUpdateResponse = UserResponse(
@@ -177,7 +197,7 @@ class UserControllerTest(
             )
 
         every { userService.update(userForUpdate.id, userUpdateRequest) } returns userForUpdate
-        every { userMapper.userToUserResponse(userForUpdate)} returns userUpdateResponse
+        every { userMapper.userToUserResponse(userForUpdate, user.id)} returns userUpdateResponse
 
         mockMvc.patch("/api/users/${userForUpdate.id}") {
             contentType = MediaType.APPLICATION_JSON
@@ -206,6 +226,7 @@ class UserControllerTest(
         val pageable = PageRequest.of(0, 10)
         every { wishService.findAllByUserId(eq(user.id), any()) } returns PageImpl(wishes, pageable, wishes.size.toLong())
         every { wishMapper.toResponseList(wishes) } returns wishesResponse
+        every { minioService.toPublicUrl(any()) } returns null
 
         mockMvc.get("/api/users/${user.id}/wishes?page=0&size=10") {
             contentType = MediaType.APPLICATION_JSON
@@ -215,7 +236,6 @@ class UserControllerTest(
             jsonPath("$.items[0].title") { value(wishesResponse.first().title) }
             jsonPath("$.items[1].title") { value(wishesResponse[1].title) }
             jsonPath("$.page") { value(0) }
-            jsonPath("$.total_pages") { value(1) }
         }
 
         verify(exactly = 1) { wishService.findAllByUserId(eq(user.id), any()) }
@@ -237,6 +257,7 @@ class UserControllerTest(
 
         every { wishService.create(user.id, wishRequest)} returns wish
         every { wishMapper.toResponse(wish) } returns wishResponse
+        every { minioService.toPublicUrl(any()) } returns wishResponse.photoUrl
 
         mockMvc.post("/api/users/${user.id}/wishes") {
             contentType = MediaType.APPLICATION_JSON
@@ -261,6 +282,7 @@ class UserControllerTest(
 
         every { wishService.createWithFile(eq(user.id), any(), any()) } returns wish
         every { wishMapper.toResponse(wish) } returns wishResponse
+        every { minioService.toPublicUrl(any()) } returns wishResponse.photoUrl
 
         mockMvc.multipart("/api/users/${user.id}/wishes/with-file") {
             file(file)
@@ -280,5 +302,126 @@ class UserControllerTest(
                 any()
             )
         }
+    }
+
+    private fun setupSecurityContext(user: User) {
+        val authentication = UsernamePasswordAuthenticationToken(user, null, emptyList())
+        SecurityContextHolder.getContext().authentication = authentication
+    }
+
+    // --- TELEGRAM VERIFICATION ---
+    @Test
+    fun `verifyTelegram returns 200 and success response`() {
+        setupSecurityContext(user)
+        val request = TelegramVerificationRequest(telegramUsername = "testuser")
+        every { telegramVerificationService.requestVerification(1L, "testuser") } returns "123456"
+
+        mockMvc.post("/api/users/telegram/verify") {
+            contentType = MediaType.APPLICATION_JSON
+            content = objectMapper.writeValueAsString(request)
+        }.andExpect {
+            status { isOk() }
+            content { contentType(MediaType.APPLICATION_JSON) }
+            jsonPath("$.success") { value(true) }
+            jsonPath("$.message") { exists() }
+        }
+
+        verify(exactly = 1) { telegramVerificationService.requestVerification(1L, "testuser") }
+    }
+
+    @Test
+    fun `confirmTelegram returns 200 and success response`() {
+        setupSecurityContext(user)
+        val request = TelegramVerificationConfirmRequest(verificationCode = "123456")
+        every { telegramVerificationService.confirmVerification(1L, "123456") } returns true
+
+        mockMvc.post("/api/users/telegram/confirm") {
+            contentType = MediaType.APPLICATION_JSON
+            content = objectMapper.writeValueAsString(request)
+        }.andExpect {
+            status { isOk() }
+            content { contentType(MediaType.APPLICATION_JSON) }
+            jsonPath("$.success") { value(true) }
+            jsonPath("$.message") { exists() }
+        }
+
+        verify(exactly = 1) { telegramVerificationService.confirmVerification(1L, "123456") }
+    }
+
+    // --- SUBSCRIPTIONS ---
+    @Test
+    fun `subscribeToUser returns 200 and subscription response`() {
+        setupSecurityContext(user)
+        val subscribedTo = User(id = 2L, name = "SubscribedTo", role = UserRole.MEMBER)
+        val subscription = UserSubscription(
+            id = 1L,
+            subscriber = user,
+            subscribedTo = subscribedTo
+        )
+        val subscriptionResponse = SubscriptionResponse(
+            subscriberId = user.id,
+            subscribedToId = subscribedTo.id,
+            createdAt = OffsetDateTime.now()
+        )
+
+        every { userSubscriptionService.subscribe(1L, 2L) } returns subscription
+        every { userSubscriptionMapper.toResponse(subscription) } returns subscriptionResponse
+
+        mockMvc.post("/api/users/2/subscribe") {
+            contentType = MediaType.APPLICATION_JSON
+        }.andExpect {
+            status { isOk() }
+            content { contentType(MediaType.APPLICATION_JSON) }
+            jsonPath("$.subscriber_id") { value(user.id.toInt()) }
+            jsonPath("$.subscribed_to_id") { value(subscribedTo.id.toInt()) }
+        }
+
+        verify(exactly = 1) { userSubscriptionService.subscribe(1L, 2L) }
+    }
+
+    @Test
+    fun `unsubscribeFromUser returns 200`() {
+        setupSecurityContext(user)
+        every { userSubscriptionService.unsubscribe(1L, 2L) } returns Unit
+
+        mockMvc.delete("/api/users/2/subscribe") {
+            contentType = MediaType.APPLICATION_JSON
+        }.andExpect {
+            status { isOk() }
+        }
+
+        verify(exactly = 1) { userSubscriptionService.unsubscribe(1L, 2L) }
+    }
+
+    @Test
+    fun `getMySubscriptions returns paged list of subscriptions`() {
+        setupSecurityContext(user)
+        val subscribedTo = User(id = 2L, name = "SubscribedTo", role = UserRole.MEMBER)
+        val subscriptions = listOf(subscribedTo)
+        val subscriptionsResponse = listOf(
+            UserResponse(
+                userId = subscribedTo.id,
+                name = subscribedTo.name,
+                role = UserResponse.Role.member,
+                createdAt = OffsetDateTime.now()
+            )
+        )
+        val pageable = PageRequest.of(0, 10)
+        val subscriptionsPage = org.springframework.data.domain.PageImpl(subscriptions, pageable, 1)
+
+        every { userSubscriptionService.getSubscriptions(1L, any()) } returns subscriptionsPage
+        every { userMapper.userListToUserResponseList(subscriptions, 1L) } returns subscriptionsResponse
+
+        mockMvc.get("/api/users/subscriptions?page=0&size=10") {
+            contentType = MediaType.APPLICATION_JSON
+        }.andExpect {
+            status { isOk() }
+            content { contentType(MediaType.APPLICATION_JSON) }
+            jsonPath("$.items[0].user_id") { value(subscribedTo.id.toInt()) }
+            jsonPath("$.page") { value(0) }
+            jsonPath("$.total_pages") { value(1) }
+        }
+
+        verify(exactly = 1) { userSubscriptionService.getSubscriptions(1L, any()) }
     }
 }

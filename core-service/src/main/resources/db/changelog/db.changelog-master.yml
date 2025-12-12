@@ -4,4 +4,12 @@ databaseChangeLog:
   - include:
       file: db/changelog/changeset/002-create-wishes.yml
   - include:
+      file: db/changelog/changeset/003-add-telegram-to-users.yml
+  - include:
+      file: db/changelog/changeset/004-create-user-subscriptions.yml
+  - include:
+      file: db/changelog/changeset/005-create-telegram-verification-codes.yml
+  - include:
+      file: db/changelog/changeset/006-create-telegram-chat-links.yml
+  - include:
       file: db/changelog/changeset/add-version-users.yml

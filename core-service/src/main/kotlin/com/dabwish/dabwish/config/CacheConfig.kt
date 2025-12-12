@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator
 import com.fasterxml.jackson.databind.module.SimpleModule
 import java.time.Duration
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.cache.annotation.EnableCaching
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -185,9 +186,9 @@ class CacheConfig(
             .cacheDefaults(defaultConfig)
             .withInitialCacheConfigurations(
                 mapOf(
-                    "usersById" to usersCache,
                     "wishesById" to wishesCache,
                     "userWishes" to defaultConfig,
+                    "userSearch" to defaultConfig,
                 ),
             )
             .enableStatistics()

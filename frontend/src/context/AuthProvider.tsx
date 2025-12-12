@@ -102,13 +102,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(null);
   }, []);
 
+  const refreshUser = useCallback(async () => {
+    if (token && user?.user_id) {
+      try {
+        const { usersApi } = await import("../lib/api-client");
+        const response = await usersApi.getUserById(user.user_id);
+        setUser(response.data);
+      } catch (error) {
+        console.error("Failed to refresh user:", error);
+      }
+    }
+  }, [token, user?.user_id]);
+
   useLayoutEffect(() => {
     setUnauthorizedHandler(logout);
     return () => setUnauthorizedHandler(null);
   }, [logout]);
 
   return (
-    <AuthContext.Provider value={{ token, user, login, register, logout }}>
+    <AuthContext.Provider value={{ token, user, login, register, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

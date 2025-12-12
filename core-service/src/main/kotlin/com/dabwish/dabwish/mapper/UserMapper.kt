@@ -8,6 +8,7 @@ import com.dabwish.dabwish.model.user.UserRole
 import com.dabwish.events.user.UserCreatedEvent
 import com.dabwish.events.user.UserRole as AvroUserRole
 import org.mapstruct.AfterMapping
+import org.mapstruct.Context
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping
 import org.mapstruct.MappingTarget
@@ -28,8 +29,21 @@ abstract class UserMapper {
     //GET
     @Mapping(source = "id", target = "userId")
     @Mapping(source = "role", target = "role", qualifiedByName = ["userRoleToResponseRole"])
-    abstract fun userToUserResponse(user: User): UserResponse
-    abstract fun userListToUserResponseList(users: List<User>): List<UserResponse>
+    @Mapping(target = "telegramUsername", expression = "java(mapTelegramUsername(user, currentUserId))")
+    abstract fun userToUserResponse(user: User, @Context currentUserId: Long?): UserResponse
+    
+    @Named("mapTelegramUsername")
+    fun mapTelegramUsername(user: User, currentUserId: Long?): String? {
+        return if (currentUserId != null && currentUserId == user.id) {
+            user.telegramUsername
+        } else {
+            null
+        }
+    }
+    
+    fun userListToUserResponseList(users: List<User>, currentUserId: Long? = null): List<UserResponse> {
+        return users.map { userToUserResponse(it, currentUserId) }
+    }
 
     @Mapping(target = "userId", source = "user.id")
     @Mapping(target = "createdAt", source = "createdAtIso")

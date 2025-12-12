@@ -38,6 +38,9 @@ data class User(
     @Column(name = "password_hash", nullable = false)
     var hashPassword: String = "",
 
+    @Column(name = "telegram_username")
+    var telegramUsername: String? = null,
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     var createdAt: OffsetDateTime = OffsetDateTime.now(),
