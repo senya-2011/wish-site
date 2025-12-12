@@ -84,7 +84,6 @@ class CacheConfig(
 
             try {
                 val asMap = simpleMapper.readValue(bytes, Map::class.java) as Map<*, *>
-                @Suppress("UNCHECKED_CAST")
                 return simpleMapper.convertValue(asMap, targetClass)
             } catch (ex: Exception) {
                 throw SerializationException("Could not deserialize bytes to ${targetClass.name}", ex)

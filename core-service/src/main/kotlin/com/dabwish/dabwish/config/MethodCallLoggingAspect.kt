@@ -16,8 +16,17 @@ private val logger = KotlinLogging.logger {}
 class MethodCallLoggingAspect {
     @Around("execution(* com.dabwish.dabwish.service..*(..))")
     fun logInvocation(joinPoint: ProceedingJoinPoint): Any? {
-        logger.info { "${"[AOP] invoke {}"} ${joinPoint.signature.toShortString()}" }
-        return joinPoint.proceed()
+
+        val signature = joinPoint.signature.toShortString()
+        logger.info { "[AOP] invoke $signature" }
+
+        try{
+            val result = joinPoint.proceed()
+            return result
+        }catch(e:Exception){
+            logger.error(e) { "[AOP] exception in $signature: ${e.message}" }
+            throw e
+        }
     }
 }
 
