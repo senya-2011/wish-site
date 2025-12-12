@@ -2,11 +2,15 @@ package com.dabwish.dabwish.controller
 
 import com.dabwish.dabwish.generated.dto.WishResponse
 import com.dabwish.dabwish.mapper.UserMapper
+import com.dabwish.dabwish.mapper.UserSubscriptionMapper
 import com.dabwish.dabwish.mapper.WishMapper
 import com.dabwish.dabwish.model.user.User
 import com.dabwish.dabwish.model.user.UserRole
 import com.dabwish.dabwish.model.wish.Wish
+import com.dabwish.dabwish.service.MinioService
+import com.dabwish.dabwish.service.TelegramVerificationService
 import com.dabwish.dabwish.service.UserService
+import com.dabwish.dabwish.service.UserSubscriptionService
 import com.dabwish.dabwish.service.WishService
 import com.ninjasquad.springmockk.MockkBean
 import io.kotest.core.extensions.Extension
@@ -53,6 +57,18 @@ class UserControllerKotest : BehaviorSpec() {
     @MockkBean
     lateinit var wishMapper: WishMapper
 
+    @MockkBean
+    lateinit var telegramVerificationService: TelegramVerificationService
+
+    @MockkBean
+    lateinit var userSubscriptionService: UserSubscriptionService
+
+    @MockkBean
+    lateinit var userSubscriptionMapper: UserSubscriptionMapper
+
+    @MockkBean
+    lateinit var minioService: MinioService
+
     override fun extensions(): List<Extension> = listOf(SpringExtension)
 
     private data class WishWithFileInput(
@@ -92,7 +108,7 @@ class UserControllerKotest : BehaviorSpec() {
 
                 Then("Request is processed correctly") {
 
-                    checkAll(10,wishWithFileGenerator) { generated ->
+                    checkAll(wishWithFileGenerator) { generated ->
 
                         clearMocks(wishService, wishMapper, answers = false)
 
@@ -111,6 +127,7 @@ class UserControllerKotest : BehaviorSpec() {
 
                         every { wishService.createWithFile(eq(generated.userId), any(), any()) } returns wish
                         every { wishMapper.toResponse(wish) } returns wishResponse
+                        every { minioService.toPublicUrl(any()) } answers { firstArg() }
 
                         mockMvc.multipart("/api/users/${generated.userId}/wishes/with-file") {
                             file(generated.photo)
